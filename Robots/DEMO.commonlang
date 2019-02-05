@@ -1,0 +1,25 @@
+script DEMO targets(GazeboRobot, GazeboRobot_1) {
+	void start() {
+		MoveForward(5000);
+		TurnRight(90);
+		
+		MoveForward(5000);
+		TurnLeft(90);
+		
+		OpenGripper();
+		CloseGripper();
+		RiseGripper();
+	}
+}
+
+metamethodscollection { 
+	meta void MoveForward(int time); 
+	meta void MoveBackward(int time); 
+	meta void TurnRight(int degrees); 
+	meta void TurnLeft(int degrees); 
+	meta void Idle(int time); 
+	meta void OpenGripper();
+	meta void CloseGripper();
+	meta void RiseGripper();
+}
+

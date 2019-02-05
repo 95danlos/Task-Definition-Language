@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<robot>
+	<methods>
+  		<moveForward parameter="int time" return="void">
+		servoLeft.writeMicroseconds(1700)
+		servoRight.writeMicroseconds(1300)
+		delay(time)
+		servoLeft.writeMicroseconds(1500)
+		servoRight.writeMicroseconds(1500)
+		delay(5)
+		</moveForward>
+  		<moveBackward parameter="int time" return="void">
+		servoLeft.writeMicroseconds(1300)
+		servoRight.writeMicroseconds(1700)
+		delay(time)
+		servoLeft.writeMicroseconds(1500)
+		servoRight.writeMicroseconds(1500)
+		delay(5)
+		</moveBackward>
+  		<turnLeft parameter="int degrees" return="void">
+		servoLeft.writeMicroseconds(1300)
+		servoRight.writeMicroseconds(1300)
+		delay(degrees*5)
+		servoLeft.writeMicroseconds(1500)
+		servoRight.writeMicroseconds(1500)
+		delay(5)
+		</turnLeft>
+  		<turnRight parameter="int degrees" return="void">
+		servoLeft.writeMicroseconds(1700)
+		servoRight.writeMicroseconds(1700)
+		delay(degrees*5)
+		servoLeft.writeMicroseconds(1500)
+		servoRight.writeMicroseconds(1500)
+		delay(5)
+		</turnRight>
+  		<idle parameter="int time" return="void">
+  		servoLeft.writeMicroseconds(1500)
+		servoRight.writeMicroseconds(1500)
+		delay(time)
+		</idle>
+		<loop parameter="" return="void">
+		</loop>
+	</methods>
+	<assignments>
+  		<ServoLeft value="10"/>
+  		<ServoRight value="13"/>
+	</assignments>
+</robot>
