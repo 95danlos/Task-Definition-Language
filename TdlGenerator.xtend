@@ -11,6 +11,7 @@ import org.eclipse.xtext.generator.IGeneratorContext
 import org.xtext.tdl.tdl.Robot
 import org.xtext.tdl.tdl.Task
 import helperMethods.HelperMethods
+import java.util.ArrayList
 
 /**
  * Generates code from your model files on save.
@@ -21,67 +22,126 @@ class TdlGenerator extends AbstractGenerator {
 
 	override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
   
+  		var robot_nr = 1
 		for (robot : resource.allContents.toIterable.filter(Robot)) {
-			fsa.generateFile("/generated_files/" + robot.name + ".py", generate_robot_files(robot))
+			val generated_string = generate_robot_files(robot, robot_nr).toString
+			val generated_string_without_tabs = HelperMethods.removeLeadingTabs(generated_string)
+			fsa.generateFile("/" + robot.name + ".py", generate_robot_files_from_string(generated_string_without_tabs))
+			robot_nr++
         }
-        fsa.generateFile("/generated_files/backend.py", generate_python_backend(resource))
-		fsa.generateFile("/generated_files/index.html", generate_web_interface(resource))
+        fsa.generateFile("/backend.py", generate_python_backend(resource))
+		fsa.generateFile("/index.html", generate_web_interface(resource))
 	}
 	
 	
-	def generate_robot_files(Robot robot)
+	def generate_robot_files(Robot robot, int robot_nr)
+	
 	'''
 	
-	«"\t\t"»«robot.setupMethod.codeBlock»
+	Â«"\t\t"Â»Â«robot.setupMethod.codeBlockÂ»
 	
-			«FOR action : robot.simpleActionDefinitions»
-			def «action.name»():
-			«"\t\t"»«action.codeBlock»
-			«ENDFOR»
+			Â«FOR action : robot.simpleActionDefinitionsÂ»
+			def Â«action.nameÂ»():
+			Â«"\t\t"Â»Â«action.codeBlockÂ»
+			Â«ENDFORÂ»
 			
-			«FOR line : HelperMethods.get_runtime_Engine()»
-			«line»
-			«ENDFOR»
-	
-	
+			Â«FOR line : HelperMethods.get_codeLines_from_file(1, 182, "/runTimeEngine/Runtime_Engine_Slave.py")Â»
+			Â«lineÂ»
+			Â«ENDFORÂ»
+			
+			my_actions_table = {
+			        "actions": [
+			        Â«FOR action : robot.simpleActionDefinitionsÂ»
+			          {
+			            "action_name" : "Â«action.nameÂ»",
+			            "action_status" : "not_doing"
+			          },
+			          Â«ENDFORÂ»
+			        ]
+			    }
+			    
+			robot_status_table = {
+			        "robot_id": "Â«robot_nrÂ»",
+			        "ip_address": "0",
+			        "recovering": "0",
+			        "recovered_from_task_with_id": "0"
+			    }
+			
+			Â«FOR line : HelperMethods.get_codeLines_from_file(183, 9999, "/runTimeEngine/Runtime_Engine_Slave.py")Â»
+			Â«lineÂ»
+			Â«ENDFORÂ»
 	
 	'''
+	
+	
+	
+	def generate_robot_files_from_string(ArrayList<String> lines)
+	
+	'''
+	
+	Â«FOR line : linesÂ»
+	Â«lineÂ»
+	Â«ENDFORÂ»
+	
+	'''
+	
+	
 	
 	def generate_python_backend(Resource resource) 
 	
+	'''
+	
+	Â«FOR line : HelperMethods.get_codeLines_from_file(1, 700, "/runTimeEngine/backend.py")Â»
+	Â«lineÂ»
+	Â«ENDFORÂ»
+	
+	task_definitions = {
+				        "tasks": [
+				        Â«FOR task : resource.allContents.toIterable.filter(Task)Â»
+				        {
+				        	"task_name" : "Â«task.nameÂ»",
+				        	"actions" : [
+				        	Â«FOR simpleAction : task.simpleActions Â»
+				        		{
+				        		"action_name" : "Â«simpleAction.nameÂ»",
+				        		"action_status" : "not_doing"
+				        		},
+				          	Â«ENDFORÂ»
+				          	]
+				        },
+				          Â«ENDFORÂ»
+				          
+				        ]
+				    }
+				    
+	Â«FOR line : HelperMethods.get_codeLines_from_file(701, 9999, "/runTimeEngine/backend.py")Â»
+	Â«lineÂ»
+	Â«ENDFORÂ»
 	
 	'''
 	
-	«FOR line : HelperMethods.get_python_backend()»
-	«line»
-	«ENDFOR»
-
 	
-	
-	
-	'''
 	
 	def generate_web_interface(Resource resource)
 	'''
 	
-	«FOR line : HelperMethods.get_first_part_of_web_interface()»
-	«line»
-	«ENDFOR»
+	Â«FOR line : HelperMethods.get_codeLines_from_file(1, 40, "/runTimeEngine/index.html")Â»
+	Â«lineÂ»
+	Â«ENDFORÂ»
 	
-	«FOR task : resource.allContents.toIterable.filter(Task)»
-	<input id="«task.name»" class="button_task" type="button" value="«task.name»" onclick="taskClicked('«task.name»');" />
-	«ENDFOR»
+	Â«FOR task : resource.allContents.toIterable.filter(Task)Â»
+	<input id="Â«task.nameÂ»" class="button_task" type="button" value="Â«task.nameÂ»" onclick="taskClicked('Â«task.nameÂ»');" />
+	Â«ENDFORÂ»
 	
-	«FOR line : HelperMethods.get_second_part_of_web_interface()»
-	«line»
-	«ENDFOR»
-
-	
+	Â«FOR line : HelperMethods.get_codeLines_from_file(41, 9999, "/runTimeEngine/index.html")Â»
+	Â«lineÂ»
+	Â«ENDFORÂ»
 	
 	'''
 
 	
 }
+
 
 
 

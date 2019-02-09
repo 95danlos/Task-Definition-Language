@@ -28,7 +28,7 @@ def runtime_engine_slave():
     #subprocess.Popen("export ROS_MASTER_URI=http://10.0.0.10:11311", shell=True).wait()
 
     # anonymous = True allows multiple nodes with same name
-    rospy.init_node('Slave', anonymous=True)
+    #rospy.init_node('Slave', anonymous=True)
     bid_table_topic = rospy.Publisher('bid_table', String, queue_size=10)
     task_status_topic = rospy.Publisher('task_status', String, queue_size=10)
     global robot_status_table_topic
@@ -74,7 +74,7 @@ def find_new_biddable_tasks(mission_table):
             if check_if_task_is_doable(task.get("task_id"), mission_table):
                 bid_table["tasks"].append({
                     "task_id" : task.get("task_id"),
-                    "robot_id" : "1",
+                    "robot_id" : robot_status_table.get("robot_id"),
                     "bid_value" : "1"
                     })
 
@@ -91,11 +91,11 @@ def start_new_task(mission_table):
     for task in mission_table["tasks"]:
 
         # If robot has won task and not started yet
-        if task.get("robot_id") == "1" and task.get("task_status") != "completed" and not is_task_started(task.get("task_id")):
+        if task.get("robot_id") == robot_status_table.get("robot_id") and task.get("task_status") != "completed" and not is_task_started(task.get("task_id")):
             global task_status
             task_status = {
                 "task_id" : task.get("task_id"),
-                "robot_id" : "1",
+                "robot_id" : robot_status_table.get("robot_id"),
                 "task_status" : "started",
                 "actions": task["actions"]
             }
@@ -115,13 +115,18 @@ def start_executing_task():
     for action in task_status["actions"]:
         action["action_status"] = "started"
         action["start_time"] = time.time()
+        max_time = action.get("max_time")
+
+        # If action has no max time limit
+        if max_time == None:
+            max_time = 999999
 
         # Start action
         t = threading.Thread(target=globals()[action.get("action_name")]())
         t.start()
 
         i = 0
-        while (i < action.get("max_time")):
+        while (i < max_time):
             if not t.isAlive():
                 break
             else:
@@ -129,7 +134,7 @@ def start_executing_task():
                 i = i + 1
 
         # if thread not finished in time, task failed
-        if (i >= action.get("max_time")):
+        if (i >= max_time):
             action["action_status"] = "Failed"
             failed = True
             robot_status_table["recovering"] = "1"
@@ -172,28 +177,17 @@ def get_task_by_id(task_id, mission_table):
   for task in mission_table["tasks"]:
     if task.get("task_id") == task_id:
       return task
+  
+  
+  
 
 
-my_actions_table = {
-        "actions": [
-          {
-            "action_name" : "raiseGripper",
-            "action_status" : "not_doing"
-          },
-          {
-            "action_name" : "turnLeft",
-            "action_status" : "not_doing"
-          }
-        ]
-    }
 
 
-robot_status_table = {
-        "robot_id": "1",
-        "ip_address": "0",
-        "recovering": "0",
-        "recovered_from_task_with_id": "0"
-    }
+
+
+
+
 
 
 task_status = {}

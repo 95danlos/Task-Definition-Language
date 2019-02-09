@@ -18,40 +18,22 @@ def main():
 # Called when a client clicks on the fly button
 def message_received(client, server, message):
     task_name = ast.literal_eval(message)
-    if(task_name == "raiseGripper"):
-        mission_table["tasks"].append(
-          {
-            "task_id": "1",
-            "robot_id": "0",
-            "auction_status": "open",
-            "task_status": "not_started",
-            "actions": [
-              {
-                "action_name": "raiseGripper",
-                "action_status": "not_started",
-                "max_time": "10",
-              }
-            ],
-            "bids": [],
-            "ignore_robots": []
-          })
-    if(task_name == "dropGripper"):
-        mission_table["tasks"].append(
-          {
-            "task_id": "2",
-            "robot_id": "0",
-            "auction_status": "open",
-            "task_status": "not_started",
-            "actions": [
-              {
-                "action_name": "dropGripper",
-                "action_status": "not_started",
-                "max_time": "10",
-              }
-            ],
-            "bids": [],
-            "ignore_robots": []
-          })
+    actions = {}
+    
+    for task in task_definitions["tasks"]:
+        if task.get("task_name") == task_name:
+            actions = task.get("actions")
+    
+    mission_table["tasks"].append(
+      {
+        "task_id": len(mission_table["tasks"]) + 1,
+        "robot_id": "0",
+        "auction_status": "open",
+        "task_status": "not_started",
+        "actions": actions,
+        "bids": [],
+        "ignore_robots": []
+      })
 
 
 
@@ -592,7 +574,7 @@ def update_task_status(task_status):
 
         # check if task has failed
         if (task_status["task_status"] == "Failed"):
-          for robots in robot_status_table_master["robots"]:
+          for robot in robot_status_table_master["robots"]:
             if robot.get("robot_id") == task_status.get("robot_id"):
               robot["recovering"] == "1"
           
@@ -609,7 +591,7 @@ def update_robot_status(robot_status_table):
       robot["recovered_from_task_with_id"] = "0"
     
   if not found:
-    robot_status_table_master["robots"].push(robot_status_table)
+    robot_status_table_master["robots"].append(robot_status_table)
 
 
 def start_auction():
@@ -697,20 +679,36 @@ mission_table = {
 
 robot_status_table_master = {
         "robots": [
-          {
-            "robot_id": "1",
-            "ip_address": "0",
-            "recovering": "0",
-            "recovered_from_task_with_id": "0"
-          },
-          {
-            "robot_id": "1",
-            "ip_address": "0",
-            "recovering": "0",
-            "recovered_from_task_with_id": "0"
-          }
         ]
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 if __name__ == '__main__':

@@ -4,71 +4,56 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Scanner;
+import java.io.File;
 
 
 public class HelperMethods {
 	
-	public static ArrayList<String> get_runtime_Engine() throws Exception {		  
-		  InputStream is = HelperMethods.class.getResourceAsStream("/runTimeEngine/RunTime_Engine_Slave.py");
+	
+	public static ArrayList<String> get_codeLines_from_file(int start_line, int end_line, String file_path) throws Exception {
+		  InputStream is = HelperMethods.class.getResourceAsStream(file_path);
 		  BufferedReader reader;
+		  
 		  reader = new BufferedReader(new InputStreamReader(is));
+		  ArrayList<String> codeLines = new ArrayList<String>();
 		  
 		  String codeLine;
-		  ArrayList<String> codeLines = new ArrayList<String>();
-		  while ((codeLine = reader.readLine()) != null) {
-			  codeLines.add(codeLine);
-			  }
-		  reader.close();
-		  return codeLines;
-	}
-	
-	
-	public static ArrayList<String> get_python_backend() throws Exception {		  
-		  InputStream is = HelperMethods.class.getResourceAsStream("/runTimeEngine/backend.py");
-		  BufferedReader reader;
-		  reader = new BufferedReader(new InputStreamReader(is));
-		  
-		  String codeLine;
-		  ArrayList<String> codeLines = new ArrayList<String>();
-		  while ((codeLine = reader.readLine()) != null) {
-			  codeLines.add(codeLine);
-			  }
-		  reader.close();
-		  return codeLines;
-	}
-	
-	
-	public static ArrayList<String> get_first_part_of_web_interface() throws Exception {		  
-		  InputStream is = HelperMethods.class.getResourceAsStream("/runTimeEngine/index.html");
-		  BufferedReader reader;
-		  reader = new BufferedReader(new InputStreamReader(is));
-		  
-		  ArrayList<String> codeLines = new ArrayList<String>();
-		  for (int i = 0; i < 40; i++) {
-			  codeLines.add(reader.readLine());
-		  }
-		  reader.close();
-		  return codeLines;
-	}
-	
-	public static ArrayList<String> get_second_part_of_web_interface() throws Exception {		  
-		  InputStream is = HelperMethods.class.getResourceAsStream("/runTimeEngine/index.html");
-		  BufferedReader reader;
-		  reader = new BufferedReader(new InputStreamReader(is));
-		  
-		  String codeLine;
-		  ArrayList<String> codeLines = new ArrayList<String>();
-		  for (int i = 0; i < 40; i++) {
+		  int current_line = 1;
+		  while (current_line < start_line) {
 			  reader.readLine();
+			  current_line++;
 		  }
-		  while ((codeLine = reader.readLine()) != null) {
-			  codeLines.add(codeLine);
+		  while (current_line < end_line + 1) {
+			  codeLine = reader.readLine();
+			  if (codeLine == null) {
+				  break;
 			  }
+			  codeLines.add(codeLine);
+			  current_line++;
+		  }
 		  reader.close();
 		  return codeLines;
 	}
 	
 	
+	public static ArrayList<String> removeLeadingTabs(String param) {
+		ArrayList<String> lines = new ArrayList<String>();
+		Scanner scanner = new Scanner(param);
+		while (scanner.hasNextLine()) {
+		  String line = scanner.nextLine();
+				  String newLine = "";
+		  if (line.length() > 2) {
+		  	newLine = line.substring(2);
+		  }
+		  else {
+		  	newLine = line;
+		  }
+		  lines.add(newLine);
+		}
+		scanner.close();
+		return lines;
+    }
 }
 
 

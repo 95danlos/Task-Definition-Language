@@ -10,7 +10,7 @@ Model:
 Task:
 	"task" name=ID "():"
 	BEGIN
-		actions+=SimpleAction*
+		simpleActions+=SimpleAction*
 	END
 ;
 

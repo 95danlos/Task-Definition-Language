@@ -1,0 +1,356 @@
+task turnLeft():   
+	turnLeft
+	
+task turnRight(): 
+	turnRight
+	
+task moveForward():   
+	moveForward
+	
+task moveBackwards():   
+	moveBackwards
+
+task turnAround():  
+	turnLeft
+	turnLeft
+	
+task raiseGripper():
+	raiseGripper
+	
+	
+	
+	
+robot youbot:
+
+	setup:
+		import rospy
+		from time import sleep as _sleep
+		from geometry_msgs.msg import *
+		from geometry_msgs.msg import *
+		from gazebo_msgs.srv import *
+		from gazebo_msgs.msg import *
+	
+		rospy.init_node('youbot', anonymous=True)
+		set_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
+		
+		twist = Twist()
+		state = ModelState()
+		state.model_name = "youbot"
+		state.reference_frame = "youbot" 
+		
+	
+	
+	simpleAction moveForward():  
+		twist.linear.x = 1
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		_sleep(1)
+		
+		twist.linear.x = 0
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		
+		
+	simpleAction moveBackwards():
+		twist.linear.x = -1
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		_sleep(1)
+		
+		twist.linear.x = 0
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		
+		
+	simpleAction turnLeft():
+		twist.linear.x = 0
+		twist.angular.z = 2.1
+		state.twist = twist
+		
+		ret = set_state(state)
+		_sleep(1)
+		
+		twist.linear.x = 0
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		
+		
+	simpleAction turnRight(): 
+		twist.linear.x = 0
+		twist.angular.z = -2.1
+		state.twist = twist
+		
+		ret = set_state(state)
+		_sleep(1)
+		
+		twist.linear.x = 0
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		
+		
+		
+		
+		
+robot Gazebo_robot_1:
+
+	setup:
+		import rospy
+		from time import sleep as _sleep
+		from geometry_msgs.msg import *
+		from geometry_msgs.msg import *
+		from gazebo_msgs.srv import *
+		from gazebo_msgs.msg import *
+		
+		rospy.init_node('Gazebo_robot_1', anonymous=True)
+		
+		global req
+		req = ApplyJointEffortRequest()
+		req.start_time.secs = 0
+		req.duration.secs = 1
+		
+		global service_func
+		service_func = rospy.ServiceProxy('/gazebo/apply_joint_effort', ApplyJointEffort)
+
+		set_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
+		
+		twist = Twist()
+		state = ModelState()
+		state.model_name = "Gazebo_robot_1"
+		state.reference_frame = "Gazebo_robot_1" 
+	
+	
+	simpleAction moveForward():  
+		twist.linear.x = 1
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		_sleep(1)
+		
+		twist.linear.x = 0
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		
+		
+	simpleAction moveBackwards():
+		twist.linear.x = -1
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		_sleep(1)
+		
+		twist.linear.x = 0
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		
+		
+	simpleAction turnLeft():
+		twist.linear.x = 0
+		twist.angular.z = 10
+		state.twist = twist
+		
+		ret = set_state(state)
+		_sleep(6)
+		
+		twist.linear.x = 0
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		
+		
+	simpleAction turnRight(): 
+		twist.linear.x = 0
+		twist.angular.z = -10
+		state.twist = twist
+		
+		ret = set_state(state)
+		_sleep(6)
+		
+		twist.linear.x = 0
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		
+		
+		
+		
+	simpleAction raiseGripper():
+		req.effort = 10
+		req.joint_name = 'simple_gripper::palm_riser'
+		resp = service_func(req)
+		
+	
+	simpleAction openGripper():
+		global req
+		global service_func
+		req.effort = 10
+		req.joint_name = 'simple_gripper::palm_left_finger'
+		resp = service_func(req)
+		req.joint_name = 'simple_gripper::left_finger_tip'
+		resp = service_func(req)
+		req.effort = -10
+		req.joint_name = 'simple_gripper::palm_right_finger'
+		resp = service_func(req)
+		req.joint_name = 'simple_gripper::right_finger_tip'
+		resp = service_func(req)
+	
+	
+	simpleAction closeGripper():
+		req.effort = -10
+		req.joint_name = 'simple_gripper::palm_left_finger'
+		resp = service_func(req)
+		req.joint_name = 'simple_gripper::left_finger_tip'
+		resp = service_func(req)
+		req.effort = 10
+		req.joint_name = 'simple_gripper::palm_right_finger'
+		resp = service_func(req)
+		req.joint_name = 'simple_gripper::right_finger_tip'
+		resp = service_func(req)
+
+
+
+
+
+robot Gazebo_robot_2:
+
+	setup:
+		import rospy
+		from time import sleep as _sleep
+		from gazebo_msgs.srv import *
+		from gazebo_msgs.msg import *
+		
+		rospy.init_node('Gazebo_robot_2', anonymous=True)
+		rospy.wait_for_service('/gazebo/apply_joint_effort')
+		
+		global req
+		req = ApplyJointEffortRequest()
+		req.start_time.secs = 0
+		req.duration.secs = 1
+		
+		global service_func
+		service_func = rospy.ServiceProxy('/gazebo/apply_joint_effort', ApplyJointEffort)
+	
+		
+		
+	simpleAction moveForward():
+		req.effort = 15
+		req.joint_name = 'mobile_base_2::left_wheel_hinge_2'
+		resp = service_func(req)
+		req.joint_name = 'mobile_base_2::right_wheel_hinge_2'
+		resp = service_func(req)
+		_sleep(5)
+		req.effort = -15
+		req.joint_name = 'mobile_base_2::left_wheel_hinge_2'
+		resp = service_func(req)
+		req.joint_name = 'mobile_base_2::right_wheel_hinge_2'
+		resp = service_func(req)
+		_sleep(5)
+		
+		
+	simpleAction moveBackwards():
+		req.effort = -15
+		req.joint_name = 'mobile_base_2::left_wheel_hinge_2'
+		resp = service_func(req)
+		req.joint_name = 'mobile_base_2::right_wheel_hinge_2'
+		resp = service_func(req)
+		_sleep(5)
+		req.effort = 15
+		req.joint_name = 'mobile_base_2::left_wheel_hinge_2'
+		resp = service_func(req)
+		req.joint_name = 'mobile_base_2::right_wheel_hinge_2'
+		resp = service_func(req)
+		_sleep(5)
+		
+		
+		
+	simpleAction turnLeft():
+		req.effort = -15
+		req.joint_name = 'mobile_base_2::left_wheel_hinge_2'
+		resp = service_func(req)
+		req.effort = 15
+		req.joint_name = 'mobile_base_2::right_wheel_hinge_2'
+		resp = service_func(req)
+		_sleep(5)
+		req.effort = 15
+		req.joint_name = 'mobile_base_2::left_wheel_hinge_2'
+		resp = service_func(req)
+		req.effort = -15
+		req.joint_name = 'mobile_base_2::right_wheel_hinge_2'
+		resp = service_func(req)
+		_sleep(5)
+		
+		
+	simpleAction turnRight():
+		req.effort = 15
+		req.joint_name = 'mobile_base_2::left_wheel_hinge_2'
+		resp = service_func(req)
+		req.effort = -15
+		req.joint_name = 'mobile_base_2::right_wheel_hinge_2'
+		resp = service_func(req)
+		_sleep(5)
+		req.effort = -15
+		req.joint_name = 'mobile_base_2::left_wheel_hinge_2'
+		resp = service_func(req)
+		req.effort = 15
+		req.joint_name = 'mobile_base_2::right_wheel_hinge_2'
+		resp = service_func(req)
+		_sleep(5)
+		
+		
+	simpleAction raiseGripper():
+		req.effort = 10
+		req.joint_name = 'simple_gripper_2::palm_riser_2'
+		resp = service_func(req)
+		_sleep(5)
+		
+	
+	simpleAction openGripper():
+		global req
+		global service_func
+		req.effort = 10
+		req.joint_name = 'simple_gripper_2::palm_left_finger_2'
+		resp = service_func(req)
+		req.joint_name = 'simple_gripper_2::left_finger_tip_2'
+		resp = service_func(req)
+		req.effort = -10
+		req.joint_name = 'simple_gripper_2::palm_right_finger_2'
+		resp = service_func(req)
+		req.joint_name = 'simple_gripper_2::right_finger_tip_2'
+		resp = service_func(req)
+		_sleep(5)
+	
+	
+	simpleAction closeGripper():
+		req.effort = -10
+		req.joint_name = 'simple_gripper_2::palm_left_finger_2'
+		resp = service_func(req)
+		req.joint_name = 'simple_gripper_2::left_finger_tip_2'
+		resp = service_func(req)
+		req.effort = 10
+		req.joint_name = 'simple_gripper_2::palm_right_finger_2'
+		resp = service_func(req)
+		req.joint_name = 'simple_gripper_2::right_finger_tip_2'
+		resp = service_func(req)
+		_sleep(5)
+		
+		
+	
