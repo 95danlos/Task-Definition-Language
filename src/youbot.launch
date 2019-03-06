@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+    
+    <group ns="youbot">
+	<node pkg="gmapping" type="slam_gmapping" name="gmapping_node" output="screen" >
+		<remap from="/tf" to="/youbot/tf" />
+	</node>
+	<node pkg="move_base" type="move_base" name="move_base_node" output="screen">
+		<remap from="/tf" to="/youbot/tf" />
+		<rosparam file="$(find multi-robot-simulation)/src/local_costmap_params.yaml" command="load" />
+    		<rosparam file="$(find multi-robot-simulation)/src/global_costmap_params.yaml" command="load" /> 
+	</node>
+	<node pkg="multi-robot-simulation" type="youbot_sensor_source.py" name="youbot_sensor_source" output="screen">
+		<remap from="/tf" to="/youbot/tf" />
+	</node>
+	<node pkg="multi-robot-simulation" type="youbot_odometry_source.py" name="youbot_odometry_source" output="screen">
+		<remap from="/tf" to="/youbot/tf" />
+	</node>
+	<node pkg="multi-robot-simulation" type="youbot_base_controller.py" name="youbot_base_controller" output="screen">
+		<remap from="/tf" to="/youbot/tf" />
+	</node>
+    </group>
+
+
+
+</launch>
+
+
