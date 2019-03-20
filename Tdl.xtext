@@ -3,14 +3,14 @@ grammar org.xtext.tdl.Tdl with org.eclipse.xtext.common.Terminals
 generate tdl "http://www.xtext.org/tdl/Tdl"
 
 Model:
-	tasks+=Task*
-	robots+=Robot*
+	tasks += Task*
+	robots += Robot*
 ;
 	
 Task:
 	"task" name=ID "():"
 	BEGIN
-		simpleActions+=SimpleAction*
+		simpleActions += SimpleAction*
 	END
 ;
 
@@ -22,16 +22,9 @@ Robot:
 	"robot" name=ID ":"
 	BEGIN
 		setupMethod = SetupMethod?
-		simpleActionDefinitions+=SimpleActionDefinition*
+		simpleActionDefinitions += SimpleActionDefinition*
+		processingNodes += ProcessingNode*
 	END
-;
-
-SimpleActionDefinition:
-	"simpleAction" name=ID "():"
-	BEGIN
-		codeBlock = CodeBlock
-	END
-	
 ;
 
 SetupMethod:
@@ -41,8 +34,30 @@ SetupMethod:
 	END
 ;
 
+SimpleActionDefinition:
+	(("simpleAction" name=ID "():") | ("simpleAction" name="goTo" ("(lat,lng):" | "():")))
+	BEGIN
+		codeBlock = CodeBlock
+	END
+	
+;
+
+ProcessingNode:
+	"processingNode" name=ID "():"
+	BEGIN
+		codeBlock = CodeBlock
+	END
+	
+;
+
 CodeBlock hidden():
-    (ID | WS | INT | STRING | ML_COMMENT | SL_COMMENT | ANY_OTHER | "()")*
+    (ID | WS | INT | STRING | ML_COMMENT | SL_COMMENT | ANY_OTHER | "(" | ")" | "()" | ":" | "'" | CodeBlock_2 )*
+;
+
+CodeBlock_2 hidden():
+	BEGIN
+		CodeBlock
+	END
 ;
 
 

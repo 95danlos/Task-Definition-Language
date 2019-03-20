@@ -1,3 +1,9 @@
+"""
+
+    @start Backend Part 1
+
+"""
+
 import sys, ast, math
 import time
 import subprocess
@@ -15,25 +21,44 @@ def main():
             #time.sleep(1)
 
 
-# Called when a client clicks on the fly button
+# Called when a client sends new tasks to the robots
 def message_received(client, server, message):
-    task_name = ast.literal_eval(message)
-    actions = {}
-    
-    for task in task_definitions["tasks"]:
-        if task.get("task_name") == task_name:
-            actions = task.get("actions")
-    
-    mission_table["tasks"].append(
-      {
-        "task_id": len(mission_table["tasks"]) + 1,
-        "robot_id": "0",
-        "auction_status": "open",
-        "task_status": "not_started",
-        "actions": actions,
-        "bids": [],
-        "ignore_robots": []
-      })
+    flag = ast.literal_eval(message)[0]
+    if(flag == 0):
+        task_name = ast.literal_eval(message)[1]
+        actions = {}
+        for task in task_definitions["tasks"]:
+            if task.get("task_name") == task_name:
+                actions = task.get("actions")
+        mission_table["tasks"].append(
+        {
+            "task_id": len(mission_table["tasks"]) + 1,
+            "robot_id": "0",
+            "auction_status": "open",
+            "task_status": "not_started",
+            "actions": actions,
+            "bids": [],
+            "ignore_robots": []
+        })
+    if(flag == 1):
+        task_position = ast.literal_eval(message)[1]
+        mission_table["tasks"].append(
+        {
+            "task_id": len(mission_table["tasks"]) + 1,
+            "robot_id": "0",
+            "auction_status": "open",
+            "task_status": "not_started",
+            "actions": [
+                        {
+                        "action_name" : "goTo",
+                        "action_status" : "not_doing"
+                        },
+                          ],
+            "bids": [],
+            "ignore_robots": [],
+            "lng": task_position["lng"],
+            "lat": task_position["lat"]
+        })
 
 
 
@@ -258,7 +283,7 @@ class WebSocketHandler(StreamRequestHandler):
             return
         if not masked:
             logger.warn("Client must always be masked.")
-            self.keep_alive = 0
+            self.keep_alive = 1
             return
         if opcode == OPCODE_CONTINUATION:
             logger.warn("Continuation frames are not supported.")
@@ -540,15 +565,12 @@ def runtime_engine_master():
     rospy.Subscriber("robot_status_table", String, callback_3)
     
     # Start auction
-    t = threading.Thread(target=start_auction)
-    t.daemon = True
-    t.start()
-
-    # Start publishing tables
-    rate = rospy.Rate(1)
+    # Start publishing tasks
+    rate = rospy.Rate(2)
     while not rospy.is_shutdown():
         mission_table_topic.publish(json.dumps(mission_table))
         rate.sleep()
+        distribute_tasks()
 
 
 
@@ -592,15 +614,8 @@ def update_robot_status(robot_status_table):
     
   if not found:
     robot_status_table_master["robots"].append(robot_status_table)
-
-
-def start_auction():
-    rate = rospy.Rate(1)
-    while not rospy.is_shutdown():
-        rate.sleep()
-        distribute_tasks()
-
-
+    
+    
 
 
 """
@@ -637,32 +652,30 @@ def merge_bids(bid_table_from_robot):
     Distribute tasks
 """
 def distribute_tasks():
-
   for task in mission_table["tasks"]:
-
+      
     # Check that task is biddable
     if task.get("auction_status") == "open":
-
       highest_bidder = None
+      highest_bidder_value = None
       for bid in task["bids"]:
-        if bid.get("bid_value") > highest_bidder and robot_is_available(bid.get("robot_id")):
-          highest_bidder = bid.get("bid_value")
-
+        if bid.get("bid_value") > highest_bidder_value and robot_is_available(bid.get("robot_id")):
+          highest_bidder = bid.get("robot_id")
+          highest_bidder_value = bid.get("bid_value")
+          
       # check that there where atleast one bid
       if highest_bidder is not None:
-        task["robot_id"] = bid.get("robot_id")
+        task["robot_id"] = highest_bidder
         task["auction_status"] = "sold"
-
-
-
-
+        
+        
 def robot_is_available(robot_id):
   for task in mission_table["tasks"]:
-
+      
     # Check if task is given to the robot and not completed yet
+    print(task.get("robot_id") == robot_id, task.get("task_status") != "completed")
     if task.get("robot_id") == robot_id and task.get("task_status") != "completed":
       return False
-
   return True
 
 
@@ -684,30 +697,17 @@ robot_status_table_master = {
 
 
 
+"""
 
+    @end Backend Part 1
 
+"""
 
+"""
 
+    @start Backend Part 2
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+"""
 
 
 
@@ -771,3 +771,9 @@ mission_table_example = {
     }
 """
 
+
+"""
+
+    @end Backend Part 2
+
+"""

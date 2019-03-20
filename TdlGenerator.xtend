@@ -9,6 +9,7 @@ import org.eclipse.xtext.generator.IFileSystemAccess2
 import org.eclipse.xtext.generator.IGeneratorContext
 
 import org.xtext.tdl.tdl.Robot
+import org.xtext.tdl.tdl.ProcessingNode
 import org.xtext.tdl.tdl.Task
 import helperMethods.HelperMethods
 import java.util.ArrayList
@@ -24,9 +25,19 @@ class TdlGenerator extends AbstractGenerator {
   
   		var robot_nr = 1
 		for (robot : resource.allContents.toIterable.filter(Robot)) {
+			for (processingNode : robot.getProcessingNodes()) {
+				val generated_string = generate_processing_node(processingNode).toString
+				val generated_string_without_tabs = HelperMethods.removeLeadingTabs(generated_string)
+				fsa.generateFile("/" + robot.name + "/" + processingNode.name + ".py", generate_robot_files_from_string(generated_string_without_tabs)) 
+			}
+	        fsa.generateFile("/" + robot.name + "/" + robot.name + ".launch", generate_launch_file(robot))
+	        fsa.generateFile("/" + robot.name + "/global_costmap_params.yaml", generate_global_costmap_params_yaml_file())
+	        fsa.generateFile("/" + robot.name + "/local_costmap_params.yaml", generate_lobal_costmap_params_yaml_file())
+	        fsa.generateFile("/" + robot.name + "/" + robot.name + ".launch", generate_launch_file(robot))
+			
 			val generated_string = generate_robot_files(robot, robot_nr).toString
 			val generated_string_without_tabs = HelperMethods.removeLeadingTabs(generated_string)
-			fsa.generateFile("/" + robot.name + ".py", generate_robot_files_from_string(generated_string_without_tabs))
+			fsa.generateFile("/" + robot.name + "/" + robot.name + "_task_allocation_module.py", generate_robot_files_from_string(generated_string_without_tabs))  
 			robot_nr++
         }
         fsa.generateFile("/backend.py", generate_python_backend(resource))
@@ -45,7 +56,7 @@ class TdlGenerator extends AbstractGenerator {
 			«"\t\t"»«action.codeBlock»
 			«ENDFOR»
 			
-			«FOR line : HelperMethods.get_codeLines_from_file(1, 182, "/runTimeEngine/Runtime_Engine_Slave.py")»
+			«FOR line : HelperMethods.get_codeLines_from_file("Task Allocation Module Part 1", "/runTimeEngine/task_allocation_module.py")»
 			«line»
 			«ENDFOR»
 			
@@ -67,7 +78,7 @@ class TdlGenerator extends AbstractGenerator {
 			        "recovered_from_task_with_id": "0"
 			    }
 			
-			«FOR line : HelperMethods.get_codeLines_from_file(183, 9999, "/runTimeEngine/Runtime_Engine_Slave.py")»
+			«FOR line : HelperMethods.get_codeLines_from_file("Task Allocation Module Part 2", "/runTimeEngine/task_allocation_module.py")»
 			«line»
 			«ENDFOR»
 	
@@ -78,12 +89,96 @@ class TdlGenerator extends AbstractGenerator {
 	def generate_robot_files_from_string(ArrayList<String> lines)
 	
 	'''
-	
 	«FOR line : lines»
 	«line»
 	«ENDFOR»
+	'''
+	
+	
+	
+	def generate_processing_node(ProcessingNode processingNode)
 	
 	'''
+	«"\t\t"»«processingNode.codeBlock»
+	
+	'''
+	
+	
+	
+	def generate_launch_file(Robot robot)
+	
+	'''
+	<?xml version="1.0" encoding="UTF-8"?>
+	
+	<launch>
+	    
+	    <group ns="«robot.name»">
+		<node pkg="gmapping" type="slam_gmapping" name="gmapping_node" output="screen" >
+			<remap from="/tf" to="/«robot.name»/tf" />
+		</node>
+		<node pkg="move_base" type="move_base" name="move_base_node" output="screen">
+			<remap from="/tf" to="/«robot.name»/tf" />
+			<rosparam file="$(find multi-robot-simulation)/src/«robot.name»/local_costmap_params.yaml" command="load" />
+	    		<rosparam file="$(find multi-robot-simulation)/src/«robot.name»/global_costmap_params.yaml" command="load" /> 
+		</node>
+		
+		«FOR processingNode : robot.processingNodes»
+		<node pkg="multi-robot-simulation" type="«processingNode.name».py" name="«processingNode.name»" output="screen">
+			<remap from="/tf" to="/«robot.name»/tf" />
+		</node>
+		«ENDFOR»
+		
+	    </group>
+	    
+	    <node pkg="multi-robot-simulation" type="task_allocation_module.py" name="task_allocation_module" output="screen">
+		</node>
+	
+	
+	
+	</launch>
+
+	
+	'''
+	
+	
+	def generate_global_costmap_params_yaml_file()
+	
+	'''
+	
+	global_costmap:
+	  global_frame: /map
+	  robot_base_frame: base_link
+	  update_frequency: 5.0
+	  static_map: false
+	  origin_x: -10
+	  origin_y: -10
+	  width: 20.0
+	  height: 20.0
+	
+	'''
+	
+	
+	
+	def generate_lobal_costmap_params_yaml_file()
+	
+	'''
+	
+	local_costmap:
+	  global_frame: /map
+	  robot_base_frame: base_link
+	  update_frequency: 5.0
+	  publish_frequency: 2.0
+	  static_map: false
+	  rolling_window: true
+	  resolution: 0.05 
+	  origin_x: -10
+	  origin_y: -10
+	  width: 20.0
+	  height: 20.0
+
+	
+	'''
+	
 	
 	
 	
@@ -91,7 +186,7 @@ class TdlGenerator extends AbstractGenerator {
 	
 	'''
 	
-	«FOR line : HelperMethods.get_codeLines_from_file(1, 700, "/runTimeEngine/backend.py")»
+	«FOR line : HelperMethods.get_codeLines_from_file("Backend Part 1", "/runTimeEngine/backend.py")»
 	«line»
 	«ENDFOR»
 	
@@ -114,7 +209,7 @@ class TdlGenerator extends AbstractGenerator {
 				        ]
 				    }
 				    
-	«FOR line : HelperMethods.get_codeLines_from_file(701, 9999, "/runTimeEngine/backend.py")»
+	«FOR line : HelperMethods.get_codeLines_from_file("Backend Part 2", "/runTimeEngine/backend.py")»
 	«line»
 	«ENDFOR»
 	
@@ -125,7 +220,7 @@ class TdlGenerator extends AbstractGenerator {
 	def generate_web_interface(Resource resource)
 	'''
 	
-	«FOR line : HelperMethods.get_codeLines_from_file(1, 40, "/runTimeEngine/index.html")»
+	«FOR line : HelperMethods.get_codeLines_from_file("Index Part 1", "/runTimeEngine/index.html")»
 	«line»
 	«ENDFOR»
 	
@@ -133,7 +228,7 @@ class TdlGenerator extends AbstractGenerator {
 	<input id="«task.name»" class="button_task" type="button" value="«task.name»" onclick="taskClicked('«task.name»');" />
 	«ENDFOR»
 	
-	«FOR line : HelperMethods.get_codeLines_from_file(41, 9999, "/runTimeEngine/index.html")»
+	«FOR line : HelperMethods.get_codeLines_from_file("Index Part 2", "/runTimeEngine/index.html")»
 	«line»
 	«ENDFOR»
 	

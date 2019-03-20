@@ -15,6 +15,15 @@ robot id --> unique
 """
 
 
+
+"""
+
+    @start Task Allocation Module Part 1
+
+"""
+
+
+
 from std_msgs.msg import String
 import threading
 import rospy
@@ -97,7 +106,9 @@ def start_new_task(mission_table):
                 "task_id" : task.get("task_id"),
                 "robot_id" : robot_status_table.get("robot_id"),
                 "task_status" : "started",
-                "actions": task["actions"]
+                "actions": task["actions"],
+                "lng": task.get("lng"),
+                "lat": task.get("lat")
             }
 
             # Start task
@@ -122,7 +133,10 @@ def start_executing_task():
             max_time = 999999
 
         # Start action
-        t = threading.Thread(target=globals()[action.get("action_name")]())
+        if(action.get("action_name")=="goTo"):
+          t = threading.Thread(target=globals()[action.get("action_name")](task_status["lng"], task_status["lat"]))
+        else:
+          t = threading.Thread(target=globals()[action.get("action_name")]())
         t.start()
 
         i = 0
@@ -179,6 +193,12 @@ def get_task_by_id(task_id, mission_table):
       return task
   
   
+
+"""
+
+    @end Task Allocation Module Part 1
+
+"""
   
 
 
@@ -188,7 +208,11 @@ def get_task_by_id(task_id, mission_table):
 
 
 
+"""
 
+    @start Task Allocation Module Part 2
+
+"""
 
 task_status = {}
     
@@ -199,3 +223,8 @@ if __name__ == '__main__':
 
 
 
+"""
+
+    @end Task Allocation Module Part 2
+
+"""
