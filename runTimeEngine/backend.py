@@ -23,43 +23,38 @@ def main():
 
 # Called when a client sends new tasks to the robots
 def message_received(client, server, message):
-    flag = ast.literal_eval(message)[0]
-    if(flag == 0):
-        task_name = ast.literal_eval(message)[1]
-        actions = {}
-        for task in task_definitions["tasks"]:
-            if task.get("task_name") == task_name:
-                actions = task.get("actions")
-        mission_table["tasks"].append(
+    for new_task in ast.literal_eval(message)["tasks"]:
+        new_composite_task = {
+            "tasks": []
+        }
+        composite_task_definition = {
+            "tasks": []
+        }
+        for composite_task_definition in task_definitions["composite_tasks"]:
+            if composite_task_definition.get("composite_task_name") == new_task.get("composite_task_name"):
+                composite_task_definition["tasks"] = composite_task_definition.get("tasks")
+                
+        i = 1
+        new_composite_task_id = len(mission_table["composite_tasks"]) + 1
+        for task in composite_task_definition["tasks"]:
+            new_composite_task["tasks"].append(
         {
-            "task_id": len(mission_table["tasks"]) + 1,
+            "task_id": (str(new_composite_task_id) + "." + str(i)),
+            "task_name": task.get("task_name"),
             "robot_id": "0",
             "auction_status": "open",
             "task_status": "not_started",
-            "actions": actions,
+            "actions": task.get("actions"),
             "bids": [],
             "ignore_robots": []
         })
-    if(flag == 1):
-        task_position = ast.literal_eval(message)[1]
-        mission_table["tasks"].append(
-        {
-            "task_id": len(mission_table["tasks"]) + 1,
-            "robot_id": "0",
-            "auction_status": "open",
-            "task_status": "not_started",
-            "actions": [
-                        {
-                        "action_name" : "goTo",
-                        "action_status" : "not_doing"
-                        },
-                          ],
-            "bids": [],
-            "ignore_robots": [],
-            "lng": task_position["lng"],
-            "lat": task_position["lat"]
-        })
-
+        new_composite_task["composite_task_id"] = str(new_composite_task_id)
+        new_composite_task["composite_task_status"] = "not_started"
+        new_composite_task["lat"] = new_task.get("lat")
+        new_composite_task["lng"] = new_task.get("lng")
+            
+            
+        mission_table["composite_tasks"].append(new_composite_task)
 
 
 
@@ -589,18 +584,19 @@ def callback_3(robot_status_table_json):
 
 
 def update_task_status(task_status):
-    for task in mission_table["tasks"]:
-      if task.get("task_id") == task_status.get("task_id"):
-        task["actions"] = task_status["actions"]
-        task["task_status"] = task_status["task_status"]
-
-        # check if task has failed
-        if (task_status["task_status"] == "Failed"):
-          for robot in robot_status_table_master["robots"]:
-            if robot.get("robot_id") == task_status.get("robot_id"):
-              robot["recovering"] == "1"
-          
-          print("Master: Task Failed")
+    for composite_task in mission_table["composite_tasks"]:
+        for task in composite_task["tasks"]:
+          if task.get("task_id") == task_status.get("task_id"):
+            task["actions"] = task_status["actions"]
+            task["task_status"] = task_status["task_status"]
+    
+            # check if task has failed
+            if (task_status["task_status"] == "Failed"):
+              for robot in robot_status_table_master["robots"]:
+                if robot.get("robot_id") == task_status.get("robot_id"):
+                  robot["recovering"] == "1"
+              
+              print("Master: Task Failed")
 
 
 def update_robot_status(robot_status_table):
@@ -623,27 +619,30 @@ def update_robot_status(robot_status_table):
 """
 def merge_bids(bid_table_from_robot):
 
+  # Find each task the robot has bidded on
   for task_to_bid_on in bid_table_from_robot["tasks"]:
-    for task in mission_table["tasks"]:
-
-      # Find task in mission table
-      if task_to_bid_on.get("task_id") == task.get("task_id"):
-
-        # Check if bid from this robot allready exists
-        bid_allredy_exists = False
-        for bid in task["bids"]:
-
-          # If bid allready exists override old bid
-          if bid.get("robot_id") == task_to_bid_on.get("robot_id"):
-            bid["bid_value"] = task_to_bid_on.get("bid_value")
-            bid_allredy_exists = True
-
-        # If not add new bid
-        if not bid_allredy_exists:
-          task["bids"].append({
-                "robot_id" : task_to_bid_on.get("robot_id"),
-                "bid_value" : task_to_bid_on.get("bid_value")
-                })
+      
+      # Find task in mission table                                    use get_task_by_id function   -----------------------------------------------
+      for composite_task in mission_table["composite_tasks"]:
+        for task in composite_task["tasks"]:
+            
+          if task_to_bid_on.get("task_id") == task.get("task_id"):
+    
+            # Check if bid from this robot allready exists
+            bid_allredy_exists = False
+            for bid in task["bids"]:
+    
+              # If bid allready exists override old bid
+              if bid.get("robot_id") == task_to_bid_on.get("robot_id"):
+                bid["bid_value"] = task_to_bid_on.get("bid_value")
+                bid_allredy_exists = True
+    
+            # If not add new bid
+            if not bid_allredy_exists:
+              task["bids"].append({
+                    "robot_id" : task_to_bid_on.get("robot_id"),
+                    "bid_value" : task_to_bid_on.get("bid_value")
+                    })
 
 
 
@@ -652,42 +651,45 @@ def merge_bids(bid_table_from_robot):
     Distribute tasks
 """
 def distribute_tasks():
-  for task in mission_table["tasks"]:
-      
-    # Check that task is biddable
-    if task.get("auction_status") == "open":
-      highest_bidder = None
-      highest_bidder_value = None
-      for bid in task["bids"]:
-        if bid.get("bid_value") > highest_bidder_value and robot_is_available(bid.get("robot_id")):
-          highest_bidder = bid.get("robot_id")
-          highest_bidder_value = bid.get("bid_value")
+    
+    for composite_task in mission_table["composite_tasks"]:
+        for task in composite_task["tasks"]:
           
-      # check that there where atleast one bid
-      if highest_bidder is not None:
-        task["robot_id"] = highest_bidder
-        task["auction_status"] = "sold"
+            # Check that task is biddable
+            if task.get("auction_status") == "open":
+              highest_bidder = None
+              highest_bidder_value = None
+              for bid in task["bids"]:
+                if bid.get("bid_value") > highest_bidder_value and robot_is_available(bid.get("robot_id")):
+                  highest_bidder = bid.get("robot_id")
+                  highest_bidder_value = bid.get("bid_value")
+                  
+              # check that there where atleast one bid
+              if highest_bidder is not None:
+                task["robot_id"] = highest_bidder
+                task["auction_status"] = "sold"
         
         
 def robot_is_available(robot_id):
-  for task in mission_table["tasks"]:
+    for composite_task in mission_table["composite_tasks"]:
+        for task in composite_task["tasks"]:
       
-    # Check if task is given to the robot and not completed yet
-    print(task.get("robot_id") == robot_id, task.get("task_status") != "completed")
-    if task.get("robot_id") == robot_id and task.get("task_status") != "completed":
-      return False
-  return True
+            # Check if task is given to the robot and not completed yet
+            if task.get("robot_id") == robot_id and task.get("task_status") != "completed":
+              return False
+    return True
 
 
 def get_task_by_id(task_id):
-  for task in mission_table["tasks"]:
-    if task.get("task_id") == task_id:
-      return task
+    for composite_task in mission_table["composite_tasks"]:
+        for task in composite_task["tasks"]:
+            if task.get("task_id") == task_id:
+                return task
 
 
 
 mission_table = {
-        "tasks": []
+        "composite_tasks": []
     }
 
 robot_status_table_master = {
@@ -726,9 +728,13 @@ if __name__ == '__main__':
 
 """
 mission_table_example = {
+    "composite_tasks": [
+    {
+        "composite_tasks_id": "1"
+        "composite_tasks_name": "2_robots_move_forward_and_back"
         "tasks": [
           {
-            "task_id": "1",
+            "task_id": "1.1",
             "robot_id": "0",
             "auction_status": "open",
             "task_status": "not_started",
@@ -748,7 +754,7 @@ mission_table_example = {
             "ignore_robots": []
           },
           {
-            "task_id": "2",
+            "task_id": "1.2",
             "robot_id": "0",
             "auction_status": "open",
             "task_status": "not_started",
@@ -768,7 +774,9 @@ mission_table_example = {
             "ignore_robots": []
           }
         ]
+    ]
     }
+}
 """
 
 

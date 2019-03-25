@@ -74,18 +74,19 @@ def find_new_biddable_tasks(mission_table):
         "tasks": []
     }
     
-    for task in mission_table["tasks"]:
-
-        # If task is biddable
-        if task.get("auction_status") == "open":
-            
-            # If task is doable by this robot send bid
-            if check_if_task_is_doable(task.get("task_id"), mission_table):
-                bid_table["tasks"].append({
-                    "task_id" : task.get("task_id"),
-                    "robot_id" : robot_status_table.get("robot_id"),
-                    "bid_value" : "1"
-                    })
+    for composite_task in mission_table["composite_tasks"]:
+        for task in composite_task["tasks"]:
+    
+            # If task is biddable
+            if task.get("auction_status") == "open":
+                
+                # If task is doable by this robot send bid
+                if check_if_task_is_doable(task.get("task_id"), mission_table):
+                    bid_table["tasks"].append({
+                        "task_id" : task.get("task_id"),
+                        "robot_id" : robot_status_table.get("robot_id"),
+                        "bid_value" : "1"
+                        })
 
     return bid_table
 
@@ -97,23 +98,26 @@ def find_new_biddable_tasks(mission_table):
     """
 def start_new_task(mission_table):
     
-    for task in mission_table["tasks"]:
-
-        # If robot has won task and not started yet
-        if task.get("robot_id") == robot_status_table.get("robot_id") and task.get("task_status") != "completed" and not is_task_started(task.get("task_id")):
-            global task_status
-            task_status = {
-                "task_id" : task.get("task_id"),
-                "robot_id" : robot_status_table.get("robot_id"),
-                "task_status" : "started",
-                "actions": task["actions"],
-                "lng": task.get("lng"),
-                "lat": task.get("lat")
-            }
-
-            # Start task
-            t = threading.Thread(target=start_executing_task)
-            t.start()
+    # For each task
+    for composite_task in mission_table["composite_tasks"]:
+        for task in composite_task["tasks"]:
+    
+            # If robot has won the task and not started yet
+            if task.get("robot_id") == robot_status_table.get("robot_id") and task.get("task_status") != "completed" and not is_task_started(task.get("task_id")):
+                global task_status
+                task_status = {
+                    "task_id" : task.get("task_id"),
+                    "robot_id" : robot_status_table.get("robot_id"),
+                    "task_status" : "started",
+                    "actions": task["actions"],
+                    "positioning_action" : task.get("positioning_action"),
+                    "lng": composite_task.get("lng"),
+                    "lat": composite_task.get("lat")
+                }
+    
+                # Start task
+                t = threading.Thread(target=start_executing_task)
+                t.start()
 
 
 
@@ -133,8 +137,8 @@ def start_executing_task():
             max_time = 999999
 
         # Start action
-        if(action.get("action_name")=="goTo"):
-          t = threading.Thread(target=globals()[action.get("action_name")](task_status["lng"], task_status["lat"]))
+        if(action.get("positioning_action")=="True"):
+          t = threading.Thread(target=globals()[action.get("action_name")](task_status.get("lat"), task_status.get("lng")))
         else:
           t = threading.Thread(target=globals()[action.get("action_name")]())
         t.start()
@@ -177,20 +181,23 @@ def waif_for_method(t):
 
 
 def check_if_task_is_doable(task_id, mission_table):
-  
   task = get_task_by_id(task_id, mission_table)
-  
+  task_doable = True
   for action in task["actions"]:
+    action_doable = False
     for my_action in my_actions_table["actions"]:
       if my_action.get("action_name") == action.get("action_name"):
-        return True
-  return False
-
-
+        action_doable = True
+    if action_doable == False:
+        task_doable = False
+  return task_doable
+  
+  
 def get_task_by_id(task_id, mission_table):
-  for task in mission_table["tasks"]:
-    if task.get("task_id") == task_id:
-      return task
+    for composite_task in mission_table["composite_tasks"]:
+        for task in composite_task["tasks"]:
+            if task.get("task_id") == task_id:
+                return task
   
   
 

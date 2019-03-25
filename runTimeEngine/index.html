@@ -73,7 +73,7 @@
             <div id="error_message" class="error_message"></div>
 
 		<div class="buttonBox">
-		
+			<input id="start_button" class="button_task" type="button" value="Start Mission" onclick="start_mission();" />
 <!--
 
 	@end Index Part 1
@@ -105,39 +105,15 @@
 					'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
 				id: 'mapbox.streets'
 			}).addTo(mymap);
-
-
-			function onMapClick(e) {
-				var newpos = e.latlng;
-				
-				console.log("Task:" + task)
-				if(task === "search") { 
-					console.log(newpos)
-					doSearchTask(newpos)
-				}
-				else if(task === "line") {
-					doLineTask(newpos)
-				}
-				else if(task === "pickup") {
-					doPickupTask(newpos)
-				}
-				else if(task === "obstacle") {
-					doObstacle(newpos)
-				}
-				
-			}
-			mymap.on('click', e => {
-				console.log(e)
-				var startposmarker = L.marker([0,0]);
-				startposmarker.setLatLng(e.latlng);
-				startposmarker.addTo(mymap);
-				positionClicked(e.latlng)
-			});
-
+			
+			
 			var map_markers = new Map();
-		
-		
+			var current_task = ""
+			var tasks = {
+		        "tasks": []
+		    }
 			var ws;
+			
 			function init() {
 				// Connect to Web Socket
 				ws = new WebSocket("ws://localhost:9001/");
@@ -164,13 +140,29 @@
 				};
 			}
 			
-			function taskClicked(task_name) {
-				ws.send(JSON.stringify([0, task_name]));
+			function setTask(task) {
+				this.current_task = task
 			}
-			function positionClicked(pos) {
-				ws.send(JSON.stringify([1, pos]));
+			
+			mymap.on('click', e => {
+				if (this.current_task !== "") {
+					var startposmarker = L.marker([0,0]);
+					startposmarker.setLatLng(e.latlng);
+					startposmarker.addTo(mymap);
+					this.tasks["tasks"].push(
+			        {
+			            "name": this.current_task,
+			            "lat": e.latlng.lat,
+            			"lng": e.latlng.lng
+			        })
+			    }
+			});
+			
+			function start_mission() {
+				ws.send(JSON.stringify(tasks));
+				//add_permanent_markers()
+				//clear_tasks()
 			}
-
 
 			async function display_error_message(message) {
 				document.getElementById('error_message').innerHTML = message;

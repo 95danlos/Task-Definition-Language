@@ -3,26 +3,34 @@ grammar org.xtext.tdl.Tdl with org.eclipse.xtext.common.Terminals
 generate tdl "http://www.xtext.org/tdl/Tdl"
 
 Model:
-	tasks += Task*
+	compositeTasks += CompositeTask*
 	robots += Robot*
+;
+
+CompositeTask:
+	"compositeTask" name=ID "(lat,lng):"
+	BEGIN
+		tasks += Task*
+	END
 ;
 	
 Task:
 	"task" name=ID "():"
 	BEGIN
-		simpleActions += SimpleAction*
+		simpleActions += SimpleActionReference*
 	END
 ;
 
-SimpleAction:
-	name=ID
+SimpleActionReference:
+	name=ID ("():" | position="(lat,lng):")  
 ;
+
 
 Robot:
 	"robot" name=ID ":"
 	BEGIN
 		setupMethod = SetupMethod?
-		simpleActionDefinitions += SimpleActionDefinition*
+		simpleActions += SimpleAction*
 		processingNodes += ProcessingNode*
 	END
 ;
@@ -34,8 +42,8 @@ SetupMethod:
 	END
 ;
 
-SimpleActionDefinition:
-	(("simpleAction" name=ID "():") | ("simpleAction" name="goTo" ("(lat,lng):" | "():")))
+SimpleAction:
+	"simpleAction" name=ID ("():" | position="(lat,lng):") 
 	BEGIN
 		codeBlock = CodeBlock
 	END
@@ -43,15 +51,30 @@ SimpleActionDefinition:
 ;
 
 ProcessingNode:
+	(
 	"processingNode" name=ID "():"
 	BEGIN
 		codeBlock = CodeBlock
+	END	)
+	| 
+	("processingNode" name=ID "(" nodeType=STRING "," nodeName=STRING ("," nodeArgs=STRING)? "):"
+	(
+	BEGIN
+		"Parameters:"
+		BEGIN
+			codeBlock = CodeBlock
+		END
 	END
-	
+	)?
+	)
+;
+
+Parameter:
+	name = ID ":" value = INT
 ;
 
 CodeBlock hidden():
-    (ID | WS | INT | STRING | ML_COMMENT | SL_COMMENT | ANY_OTHER | "(" | ")" | "()" | ":" | "'" | CodeBlock_2 )*
+    (ID | WS | INT | STRING | ML_COMMENT | SL_COMMENT | ANY_OTHER | "(" | ")" | "):" | "()" | ":" | "'" | "," | CodeBlock_2 )*
 ;
 
 CodeBlock_2 hidden():

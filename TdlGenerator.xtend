@@ -10,9 +10,9 @@ import org.eclipse.xtext.generator.IGeneratorContext
 
 import org.xtext.tdl.tdl.Robot
 import org.xtext.tdl.tdl.ProcessingNode
-import org.xtext.tdl.tdl.Task
 import helperMethods.HelperMethods
 import java.util.ArrayList
+import org.xtext.tdl.tdl.CompositeTask
 
 /**
  * Generates code from your model files on save.
@@ -23,36 +23,64 @@ class TdlGenerator extends AbstractGenerator {
 
 	override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
   
-  		var robot_nr = 1
+  
+  		// For Each Robot
 		for (robot : resource.allContents.toIterable.filter(Robot)) {
+			
+			// For Each of the Robots Node
 			for (processingNode : robot.getProcessingNodes()) {
-				val generated_string = generate_processing_node(processingNode).toString
-				val generated_string_without_tabs = HelperMethods.removeLeadingTabs(generated_string)
-				fsa.generateFile("/" + robot.name + "/" + processingNode.name + ".py", generate_robot_files_from_string(generated_string_without_tabs)) 
+				
+				// If Custom Node Generate File For It
+				if (processingNode.nodeName === null) {
+					val generated_string = generate_processing_node(processingNode).toString
+					val generated_string_without_tabs = HelperMethods.removeLeadingTabs(generated_string)
+					fsa.generateFile("/" + robot.name + "/" + robot.name + "_" + processingNode.name + ".py", generate_robot_files_from_string(generated_string_without_tabs)) 
+				}
+				
+				// If ROS Provided Node Generate Yaml Parameter File
+				if (processingNode.nodeName !== null && processingNode.codeBlock !== null) {
+					val generated_string_2 = generate_yaml_file(processingNode).toString
+					val generated_string_2_without_tabs = HelperMethods.format_yaml_file(generated_string_2)
+					fsa.generateFile("/" + robot.name + "/" + processingNode.nodeName + ".yaml", generate_robot_files_from_string(generated_string_2_without_tabs)) 
+				}
 			}
-	        fsa.generateFile("/" + robot.name + "/" + robot.name + ".launch", generate_launch_file(robot))
-	        fsa.generateFile("/" + robot.name + "/global_costmap_params.yaml", generate_global_costmap_params_yaml_file())
-	        fsa.generateFile("/" + robot.name + "/local_costmap_params.yaml", generate_lobal_costmap_params_yaml_file())
+			
+			// Generate ROS Launch File
 	        fsa.generateFile("/" + robot.name + "/" + robot.name + ".launch", generate_launch_file(robot))
 			
-			val generated_string = generate_robot_files(robot, robot_nr).toString
+			// Generate Task Allocation Module
+			val generated_string = generate_task_allocation_module(robot).toString
 			val generated_string_without_tabs = HelperMethods.removeLeadingTabs(generated_string)
 			fsa.generateFile("/" + robot.name + "/" + robot.name + "_task_allocation_module.py", generate_robot_files_from_string(generated_string_without_tabs))  
-			robot_nr++
         }
-        fsa.generateFile("/backend.py", generate_python_backend(resource))
-		fsa.generateFile("/index.html", generate_web_interface(resource))
+        
+        // Needed To Support the Definition of Tasks in a Sepperate File from Robots
+        var task_nr = 0
+		for (task : resource.allContents.toIterable.filter(CompositeTask)) {
+			task_nr++
+        }
+        
+        // Generate Backend and Index File
+        if (task_nr > 0) {
+        	fsa.generateFile("/backend.py", generate_python_backend(resource))
+			fsa.generateFile("/index.html", generate_web_interface(resource))
+        }
 	}
 	
 	
-	def generate_robot_files(Robot robot, int robot_nr)
+	def generate_task_allocation_module(Robot robot)
 	
 	'''
 	
 	«"\t\t"»«robot.setupMethod.codeBlock»
 	
-			«FOR action : robot.simpleActionDefinitions»
+			«FOR action : robot.simpleActions»
+			«IF action.position !== null»
+			def «action.name»(lat,lng):
+			«ENDIF»
+			«IF action.position === null»
 			def «action.name»():
+			«ENDIF»
 			«"\t\t"»«action.codeBlock»
 			«ENDFOR»
 			
@@ -62,7 +90,7 @@ class TdlGenerator extends AbstractGenerator {
 			
 			my_actions_table = {
 			        "actions": [
-			        «FOR action : robot.simpleActionDefinitions»
+			        «FOR action : robot.simpleActions»
 			          {
 			            "action_name" : "«action.name»",
 			            "action_status" : "not_doing"
@@ -72,7 +100,7 @@ class TdlGenerator extends AbstractGenerator {
 			    }
 			    
 			robot_status_table = {
-			        "robot_id": "«robot_nr»",
+			        "robot_id": "«robot.name»",
 			        "ip_address": "0",
 			        "recovering": "0",
 			        "recovered_from_task_with_id": "0"
@@ -113,24 +141,26 @@ class TdlGenerator extends AbstractGenerator {
 	<launch>
 	    
 	    <group ns="«robot.name»">
-		<node pkg="gmapping" type="slam_gmapping" name="gmapping_node" output="screen" >
-			<remap from="/tf" to="/«robot.name»/tf" />
-		</node>
-		<node pkg="move_base" type="move_base" name="move_base_node" output="screen">
-			<remap from="/tf" to="/«robot.name»/tf" />
-			<rosparam file="$(find multi-robot-simulation)/src/«robot.name»/local_costmap_params.yaml" command="load" />
-	    		<rosparam file="$(find multi-robot-simulation)/src/«robot.name»/global_costmap_params.yaml" command="load" /> 
-		</node>
-		
-		«FOR processingNode : robot.processingNodes»
-		<node pkg="multi-robot-simulation" type="«processingNode.name».py" name="«processingNode.name»" output="screen">
-			<remap from="/tf" to="/«robot.name»/tf" />
-		</node>
-		«ENDFOR»
+			
+			«FOR processingNode : robot.processingNodes»
+				«IF processingNode.nodeName === null»
+				<node pkg="multi-robot-simulation" type="«robot.name»_«processingNode.name».py" name="«robot.name»_«processingNode.name»" output="screen">
+					<remap from="/tf" to="/«robot.name»/tf" />
+				</node>
+				«ENDIF»
+				«IF processingNode.nodeName !== null»
+				<node pkg="«processingNode.name»" type="«processingNode.nodeType»" name="«processingNode.nodeName»" output="screen" «IF processingNode.nodeArgs !== null» args="«processingNode.nodeArgs»"«ENDIF» >
+					<remap from="/tf" to="/«robot.name»/tf" />
+					«IF processingNode.codeBlock !== null»
+					<rosparam file="$(find multi-robot-simulation)/src/«robot.name»/«processingNode.nodeName».yaml" command="load" />
+					«ENDIF»
+				</node> 
+				«ENDIF»
+			«ENDFOR»
 		
 	    </group>
 	    
-	    <node pkg="multi-robot-simulation" type="task_allocation_module.py" name="task_allocation_module" output="screen">
+	    <node pkg="multi-robot-simulation" type="«robot.name»_task_allocation_module.py" name="«robot.name»_task_allocation_module" output="screen">
 		</node>
 	
 	
@@ -141,41 +171,12 @@ class TdlGenerator extends AbstractGenerator {
 	'''
 	
 	
-	def generate_global_costmap_params_yaml_file()
+	def generate_yaml_file(ProcessingNode processingNode)
 	
 	'''
 	
-	global_costmap:
-	  global_frame: /map
-	  robot_base_frame: base_link
-	  update_frequency: 5.0
-	  static_map: false
-	  origin_x: -10
-	  origin_y: -10
-	  width: 20.0
-	  height: 20.0
+	«"\t\t"»«processingNode.codeBlock»
 	
-	'''
-	
-	
-	
-	def generate_lobal_costmap_params_yaml_file()
-	
-	'''
-	
-	local_costmap:
-	  global_frame: /map
-	  robot_base_frame: base_link
-	  update_frequency: 5.0
-	  publish_frequency: 2.0
-	  static_map: false
-	  rolling_window: true
-	  resolution: 0.05 
-	  origin_x: -10
-	  origin_y: -10
-	  width: 20.0
-	  height: 20.0
-
 	
 	'''
 	
@@ -191,23 +192,35 @@ class TdlGenerator extends AbstractGenerator {
 	«ENDFOR»
 	
 	task_definitions = {
-				        "tasks": [
-				        «FOR task : resource.allContents.toIterable.filter(Task)»
-				        {
-				        	"task_name" : "«task.name»",
-				        	"actions" : [
-				        	«FOR simpleAction : task.simpleActions »
-				        		{
-				        		"action_name" : "«simpleAction.name»",
-				        		"action_status" : "not_doing"
-				        		},
-				          	«ENDFOR»
-				          	]
-				        },
-				          «ENDFOR»
-				          
-				        ]
-				    }
+		"composite_tasks": [
+		«FOR compositeTask : resource.allContents.toIterable.filter(CompositeTask)»
+		{
+			"composite_task_name" : "«compositeTask.name»",
+			"tasks": [
+			«FOR task : compositeTask.tasks»
+			{
+				"task_name" : "«task.name»",
+				"actions" : [
+				«FOR simpleAction : task.simpleActions »
+				{
+					"action_name" : "«simpleAction.name»",
+					"action_status" : "not_doing",
+					«IF simpleAction.position !== null»
+					"positioning_action" : "True"
+					«ENDIF»
+					«IF simpleAction.position === null»
+					"positioning_action" : "False"
+					«ENDIF»
+				},
+				«ENDFOR»
+				]
+			},
+			«ENDFOR»
+			]
+		}
+		«ENDFOR»
+		]
+	}
 				    
 	«FOR line : HelperMethods.get_codeLines_from_file("Backend Part 2", "/runTimeEngine/backend.py")»
 	«line»
@@ -224,8 +237,8 @@ class TdlGenerator extends AbstractGenerator {
 	«line»
 	«ENDFOR»
 	
-	«FOR task : resource.allContents.toIterable.filter(Task)»
-	<input id="«task.name»" class="button_task" type="button" value="«task.name»" onclick="taskClicked('«task.name»');" />
+	«FOR compositeTask : resource.allContents.toIterable.filter(CompositeTask)»
+				<input id="«compositeTask.name»" class="button_task" type="button" value="«compositeTask.name»" onclick="setTask('«compositeTask.name»');" />
 	«ENDFOR»
 	
 	«FOR line : HelperMethods.get_codeLines_from_file("Index Part 2", "/runTimeEngine/index.html")»
