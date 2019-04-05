@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+  <sdf version="1.4">
+    <world name="default">
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <include>
+      <uri>model://robocup_3Dsim_field</uri>
+      <pose>0 0 0 0 0 4.85</pose>
+    </include>
+    <include>
+      <uri>model://robocup_3Dsim_goal</uri>
+      <pose>-1.8 13.5 0 0 0 -4.57</pose>
+    </include>
+    <include>
+      <uri>model://robocup_3Dsim_ball</uri>
+      <pose>-2.5 9 0 0 0 0</pose>
+    </include>
+    <include>
+      <uri>model://person_standing</uri>
+      <pose>-11 2 0 0 0 -4.8</pose>
+    </include>
+    <include>
+      <uri>model://person_standing</uri>
+      <pose>-11 4 0 0 0 -5.2</pose>
+    </include>
+    <include>
+      <uri>model://turtlebot</uri>
+      <pose>-2 0 0 0 0 1.57</pose>
+    </include>
+    <include>
+      <uri>model://youbot</uri>
+      <pose>1 2 0 0 0 0</pose>
+    </include>
+    <include>
+      <uri>model://youbot_2</uri>
+      <pose>-1.5 -1.5 0 0 0 -1.57</pose>
+    </include>
+    <include>
+      <uri>model://pioneer3at</uri>
+      <pose>-0.5 2 0 0 0 -4.71</pose>
+    </include>
+
+
+    </world>
+  </sdf>
+

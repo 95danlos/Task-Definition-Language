@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find multi-robot-simulation)/worlds/multi-robot-simulation.world"/>
+    </include>
+
+    <include file="$(find multi-robot-simulation)/src/youbot/youbot.launch"></include>
+    <include file="$(find multi-robot-simulation)/src/youbot_2/youbot_2.launch"></include>
+    <include file="$(find multi-robot-simulation)/src/turtlebot/turtlebot.launch"></include>
+    <include file="$(find multi-robot-simulation)/src/pioneer3at/pioneer3at.launch"></include>
+
+</launch>
+
+
+
+

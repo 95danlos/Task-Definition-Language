@@ -1,0 +1,30 @@
+
+compositeTask Play_Ball(lat,lng):          
+              
+	task defend_goal():
+		goTo(lat,lng):
+		locateGoal():
+		moveToGoal():
+		faceBall(id=1):
+		
+	task shot_ball():
+		goTo(lat,lng):
+		LocateBall():
+		moveToBall():
+		aim():
+		kickBall(after(1)): 
+		
+		
+compositeTask Entertain_Humans(lat,lng):       
+                
+	task spin_left():
+		goTo(lat,lng):
+		turnLeft():
+		turnLeft():
+		
+	task spin_right():
+		goTo(lat,lng):
+		turnRight():
+		turnRight():
+		
+		

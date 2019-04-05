@@ -22,13 +22,15 @@ Task:
 ;
 
 SimpleActionReference:
-	name=ID ("():" | position="(lat,lng):")  
+	name=ID ( "():" | position="(lat,lng):" | "(id="id=INT"):" | "(after("after=INT")):" )  
 ;
 
 
 Robot:
 	"robot" name=ID ":"
 	BEGIN
+		parameterList = ParameterList?
+		publishedData = PublishedData?
 		setupMethod = SetupMethod?
 		simpleActions += SimpleAction*
 		processingNodes += ProcessingNode*
@@ -69,12 +71,30 @@ ProcessingNode:
 	)
 ;
 
+ParameterList:
+	"ParameterList:"
+	BEGIN
+		parameter += Parameter*
+	END
+;
+
 Parameter:
-	name = ID ":" value = INT
+	name = ID ":" value = STRING
+;
+
+PublishedData:
+	"PublishedData:"
+	BEGIN
+		sensorData += SensorData*
+	END
+;
+
+SensorData:
+	name = ID ":" topic = STRING
 ;
 
 CodeBlock hidden():
-    (ID | WS | INT | STRING | ML_COMMENT | SL_COMMENT | ANY_OTHER | "(" | ")" | "):" | "()" | ":" | "'" | "," | CodeBlock_2 )*
+    (ID | WS | INT | STRING | ML_COMMENT | SL_COMMENT | ANY_OTHER | "(" | ")" | "):" | "()" | ":" | "'" | "," | "))" | CodeBlock_2 )*
 ;
 
 CodeBlock_2 hidden():

@@ -25,19 +25,39 @@ public class HelperMethods {
 		  }
 		  
 		  String codeLine = "";
+		  String lastLine = "";
 		  while (codeLine == null || !codeLine.contains("@start " + module)) {
+			  if (codeLine != null && codeLine.trim().length() > 0) {
+				  lastLine = codeLine;
+			  }
 			  codeLine = reader.readLine();
 		  }
-		  codeLines.add(start_comment);
+		  String spaces;
+		  if (lastLine.length() != lastLine.trim().length()) {
+			  spaces = lastLine.split(String.valueOf(lastLine.trim().charAt(0)))[0];
+		  }
+		  else {
+			  spaces = "";
+		  }
+		  codeLines.add(spaces + start_comment);
 		  codeLines.add(codeLine);
 		  
 		  while (codeLine == null || !codeLine.contains("@end " + module)) {
+			  if (codeLine != null && codeLine.trim().length() > 0) {
+				  lastLine = codeLine;
+			  }
 			  codeLine = reader.readLine();
 			  if (codeLine != null) {
 				  codeLines.add(codeLine);
 			  }
 		  }
-		  codeLines.add(end_comment);
+		  if (lastLine.length() != lastLine.trim().length()) {
+			  spaces = lastLine.split(String.valueOf(lastLine.trim().charAt(0)))[0];
+		  }
+		  else {
+			  spaces = "";
+		  }
+		  codeLines.add(spaces + end_comment);
 		  
 		  reader.close();
 		  return codeLines;
@@ -50,12 +70,32 @@ public class HelperMethods {
 		lines.add("#!/usr/bin/python");
 		while (scanner.hasNextLine()) {
 		  String line = scanner.nextLine();
-				  String newLine = "";
+		  String newLine = "";
 		  if (line.length() > 2) {
 		  	newLine = line.substring(2);
 		  }
 		  else {
 		  	newLine = line;
+		  }
+		  lines.add(newLine);
+		}
+		scanner.close();
+		return lines;
+    }
+	
+	
+	public static ArrayList<String> format_yaml_file(String param) {
+		ArrayList<String> lines = new ArrayList<String>();
+		Scanner scanner = new Scanner(param);
+
+		while (scanner.hasNextLine()) {
+		  String line = scanner.nextLine().trim();
+		  String newLine = "";
+		  if (line.split(":").length == 1) {
+		  	newLine = line;
+		  }
+		  else {
+		  	newLine = " " + line;
 		  }
 		  lines.add(newLine);
 		}

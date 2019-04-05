@@ -1,0 +1,422 @@
+robot youbot_2:       
+
+	PublishedData:
+		lat: "lat"
+		lng: "lng"
+
+	setup:
+		import rospy
+		import tf
+		import math
+		from std_msgs.msg import String
+		from tf2_msgs.msg import TFMessage
+		from math import sin, cos, pi
+		from nav_msgs.msg import Odometry
+		from sensor_msgs.msg import LaserScan
+		from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3, TransformStamped
+		from time import sleep as _sleep
+		from geometry_msgs.msg import Pose
+		from geometry_msgs.msg import Twist
+		from gazebo_msgs.srv import GetModelState
+		from gazebo_msgs.srv import SetModelState
+		from gazebo_msgs.msg import ModelState
+		from time import sleep as _sleep
+		from geometry_msgs.msg import *
+		from geometry_msgs.msg import *
+		from gazebo_msgs.srv import *
+		from gazebo_msgs.msg import *
+		
+		rospy.init_node('youbot_2', anonymous=True)
+		set_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
+		
+		twist = Twist()
+		state = ModelState()
+		state.model_name = "youbot_2"
+		state.reference_frame = "youbot_2" 
+		
+		
+	simpleAction goTo(lat,lng):     
+		import actionlib
+		from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+		
+		client = actionlib.SimpleActionClient('youbot_2/move_base', MoveBaseAction)  
+		
+		client.wait_for_server()
+		
+		goal = MoveBaseGoal()
+		
+		goal.target_pose.header.frame_id = "map"
+		goal.target_pose.pose.position.x = lng
+		goal.target_pose.pose.position.y = lat  
+		goal.target_pose.pose.orientation.w = 1
+		
+		client.send_goal(goal)
+		
+		r = rospy.Rate(0.5)
+		status = ""
+		while (not rospy.is_shutdown() and status != "Goal reached."):
+		  status = client.get_goal_status_text()
+		  r.sleep()
+		  
+		  
+	simpleAction moveToGoal():     
+		get_state = rospy.ServiceProxy("/gazebo/get_model_state", GetModelState)
+		set_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
+
+		pose = Pose()
+		state = ModelState()
+		state.model_name = "youbot_2"
+		state.reference_frame = "map"
+
+		rospy.wait_for_service("/gazebo/get_model_state")
+		get_state = rospy.ServiceProxy("/gazebo/get_model_state", GetModelState)
+		response = get_state("robocup_3d_goal", "")
+		response_2 = get_state("soccer_ball", "")
+		quaternion = (
+			response.pose.orientation.x,
+			response.pose.orientation.y,
+			response.pose.orientation.z,
+			response.pose.orientation.w)
+		euler = tf.transformations.euler_from_quaternion(quaternion)
+		roll = euler[0]
+		pitch = euler[1]
+		yaw = euler[2]
+		yaw = yaw - 3.4
+		quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
+
+		pose.position.x = -1.8
+		pose.position.y = 12
+
+		pose.orientation.x = quaternion[0]
+		pose.orientation.y = quaternion[1]
+		pose.orientation.z = quaternion[2]
+		pose.orientation.w = quaternion[3]
+
+		state.pose = pose
+		ret = set_state(state)
+			
+	
+	simpleAction moveToBall():
+		get_state = rospy.ServiceProxy("/gazebo/get_model_state", GetModelState)
+		set_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
+
+		pose = Pose()
+		state = ModelState()
+		state.model_name = "youbot_2"
+		state.reference_frame = "map"
+
+		rospy.wait_for_service("/gazebo/get_model_state")
+		get_state = rospy.ServiceProxy("/gazebo/get_model_state", GetModelState)
+		response = get_state("robocup_3d_goal", "")
+		response_2 = get_state("soccer_ball", "")
+		quaternion = (
+			response.pose.orientation.x,
+			response.pose.orientation.y,
+			response.pose.orientation.z,
+			response.pose.orientation.w)
+		euler = tf.transformations.euler_from_quaternion(quaternion)
+		roll = euler[0]
+		pitch = euler[1]
+		yaw = euler[2]
+		yaw = yaw - 3.6
+		quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
+
+		pose.position.x = -2.8
+		pose.position.y = 8.2
+
+		pose.orientation.x = quaternion[0]
+		pose.orientation.y = quaternion[1]
+		pose.orientation.z = quaternion[2]
+		pose.orientation.w = quaternion[3]
+
+		state.pose = pose
+		ret = set_state(state)
+			
+
+				
+	simpleAction kickBall():
+		state = ModelState()
+		state.model_name = "youbot_2"
+		state.reference_frame = "youbot_2"
+
+		set_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
+		pose = Pose()
+		twist = Twist()
+
+		_sleep(2)
+
+		twist.linear.x = -3
+		twist.linear.y = 0
+		twist.angular.z = 0
+		state.twist = twist
+		ret = set_state(state)
+
+		_sleep(1)
+
+		twist.linear.x = 0
+		twist.linear.y = 0
+		twist.angular.z = 0
+		state.twist = twist
+		ret = set_state(state)
+		
+		
+	simpleAction faceBall():
+		_sleep(1)
+		
+		
+	simpleAction aim():
+		_sleep(1)
+	
+	
+	simpleAction moveForward():
+		twist.linear.x = 2
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		_sleep(2)
+		
+		twist.linear.x = 0
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		
+		
+	simpleAction moveBackwards():
+		twist.linear.x = -2
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		_sleep(2)
+		
+		twist.linear.x = 0
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		
+		
+	simpleAction turnLeft():
+		twist.linear.x = 0
+		twist.angular.z = 4
+		state.twist = twist
+		
+		ret = set_state(state)
+		_sleep(2)
+		
+		twist.linear.x = 0
+		twist.angular.z = 0
+		state.twist = twist
+		
+		ret = set_state(state)
+		
+		
+	simpleAction turnRight(): 
+		twist.linear.x = 0
+		twist.angular.z = -4
+		state.twist = twist
+		
+		ret = set_state(state)
+		_sleep(2)
+		
+		twist.linear.x = 0
+		twist.angular.z = 0
+		state.twist = twist
+		ret = set_state(state)
+		
+		
+ 
+		
+		
+	processingNode odometry_source():
+		
+		import rospy
+		import tf
+		from std_msgs.msg import String
+		from tf2_msgs.msg import TFMessage
+		from math import sin, cos, pi
+		from nav_msgs.msg import Odometry
+		from sensor_msgs.msg import LaserScan
+		from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3, TransformStamped
+		
+		from time import sleep as _sleep
+		from geometry_msgs.msg import Pose
+		from geometry_msgs.msg import Twist
+		from gazebo_msgs.srv import GetModelState
+		from gazebo_msgs.srv import SetModelState
+		from gazebo_msgs.msg import ModelState
+		
+		rospy.init_node('odometry_source', anonymous=True)
+		
+		
+		rospy.wait_for_service("/gazebo/get_model_state")
+		rospy.wait_for_service("/gazebo/set_model_state")
+		get_state = rospy.ServiceProxy("/gazebo/get_model_state", GetModelState)
+		set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
+		
+		odom_pub = rospy.Publisher("odom", Odometry, queue_size=50)
+		odom_broadcaster = tf.TransformBroadcaster()
+		
+		lat_pub = rospy.Publisher("lat", String, queue_size=50)
+		lng_pub = rospy.Publisher("lng", String, queue_size=50)
+		
+		
+		r = rospy.Rate(20)
+		while (not rospy.is_shutdown()):
+			current_time = rospy.Time.now()
+		
+			response = get_state("youbot_2", "")
+		
+		
+			quaternion = (
+			    response.pose.orientation.x,
+			    response.pose.orientation.y,
+			    response.pose.orientation.z,
+			    response.pose.orientation.w)
+			euler = tf.transformations.euler_from_quaternion(quaternion)
+			roll = euler[0]
+			pitch = euler[1]
+			yaw = euler[2]
+		
+		
+			odom_broadcaster.sendTransform(
+			(response.pose.position.x, response.pose.position.y, 0.),
+			quaternion,
+			current_time,
+			"base_link",
+			"odom"
+			)
+			
+		
+		
+			odom = Odometry()
+			odom.header.stamp = current_time
+			odom.header.frame_id = "odom"
+		
+			#odom.pose.pose = Pose(Point(x, y, 0.), Quaternion(*odom_quat))
+			odom.pose.pose = response.pose
+		
+			odom.child_frame_id = "base_link"
+			odom.twist.twist = response.twist
+		
+			odom_pub.publish(odom)
+			
+			lat_pub.publish(str(response.pose.position.y))   
+			lng_pub.publish(str(response.pose.position.x))                    
+		
+		
+			r.sleep()
+		
+
+
+
+	processingNode base_controller():
+		
+		import rospy
+		from geometry_msgs.msg import Twist
+		from gazebo_msgs.srv import SetModelState
+		from gazebo_msgs.msg import ModelState
+		
+		
+		def callback(data):
+		
+			twist = Twist()
+		
+			twist.linear.x = data.linear.x
+			twist.linear.y = data.linear.y
+			twist.linear.z = data.linear.z
+		
+			twist.angular.x = data.angular.x
+			twist.angular.y = data.angular.y
+			twist.angular.z = data.angular.z
+		
+		
+			state = ModelState()
+		
+			state.model_name = "youbot_2"
+			state.twist = twist
+			state.reference_frame = "youbot_2" 
+		
+			ret = set_state(state)
+			
+		
+		
+		rospy.init_node('base_controller', anonymous=True)
+		set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
+		rospy.Subscriber("cmd_vel", Twist, callback)
+		
+		rospy.spin() 
+		
+		
+	
+	processingNode tf("static_transform_publisher","base_to_laser", "0 0 0 0 0 0 base_link laser 100"):   
+	
+	processingNode gmapping("slam_gmapping","gmapping"):  
+	 
+	processingNode move_base("move_base","move_base_node"):            
+		 
+		Parameters:
+			local_costmap: 
+			 global_frame: /map  
+			 robot_base_frame: base_link  
+			 update_frequency: 5.0
+			 publish_frequency: 2.0
+			 static_map: false 
+			 rolling_window: true
+			 resolution: 0.02
+			 origin_x: -20
+			 origin_y: -20
+			 width: 40.0
+			 height: 40.0    
+			
+			 obstacle_range: 2.5
+			 raytrace_range: 3.0
+			 robot_radius: 0.3
+			 inflation_radius: 0.55
+			
+			 observation_sources: laser_scan_sensor
+			 laser_scan_sensor: {sensor_frame: laser, data_type: LaserScan, topic: scan, marking: true, clearing: true}
+			
+		
+			
+			
+			global_costmap:
+			 global_frame: /map
+			 robot_base_frame: base_link
+			 update_frequency: 5.0
+			 static_map: true
+			 rolling_window: false
+			 origin_x: -20
+			 origin_y: -20
+			 width: 40.0
+			 height: 40.0
+			
+			 obstacle_range: 2.5
+			 raytrace_range: 3.0
+			 robot_radius: 0.3
+			 inflation_radius: 0.55
+			
+			 observation_sources: laser_scan_sensor
+			 laser_scan_sensor: {sensor_frame: laser, data_type: LaserScan, topic: scan, marking: true, clearing: true}
+			
+
+			
+			TrajectoryPlannerROS:
+			 max_vel_x: 2
+			 min_vel_x: -2
+			 max_vel_theta: 4.0
+			 min_in_place_vel_theta: -4
+			
+			 acc_lim_theta: 3.2
+			 acc_lim_x: 2.5
+			 acc_lim_y: 2.5
+			
+			 yaw_goal_tolerance: 10
+			 xy_goal_tolerance: 2
+			
+			 escape_vel: -2
+
+
+

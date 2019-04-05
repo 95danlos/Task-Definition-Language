@@ -1,0 +1,45 @@
+local_costmap:
+ global_frame: /map
+ robot_base_frame: base_link
+ update_frequency: 5.0
+ publish_frequency: 2.0
+ static_map: false
+ rolling_window: true
+ resolution: 0.02
+ origin_x: -20
+ origin_y: -20
+ width: 40.0
+ height: 40.0
+ obstacle_range: 2.5
+ raytrace_range: 3.0
+ robot_radius: 0.3
+ inflation_radius: 0.55
+ observation_sources: laser_scan_sensor
+ laser_scan_sensor: {sensor_frame: laser, data_type: LaserScan, topic: scan, marking: true, clearing: true}
+global_costmap:
+ global_frame: /map
+ robot_base_frame: base_link
+ update_frequency: 5.0
+ static_map: true
+ rolling_window: false
+ origin_x: -20
+ origin_y: -20
+ width: 40.0
+ height: 40.0
+ obstacle_range: 2.5
+ raytrace_range: 3.0
+ robot_radius: 0.3
+ inflation_radius: 0.55
+ observation_sources: laser_scan_sensor
+ laser_scan_sensor: {sensor_frame: laser, data_type: LaserScan, topic: scan, marking: true, clearing: true}
+TrajectoryPlannerROS:
+ max_vel_x: 2
+ min_vel_x: -2
+ max_vel_theta: 4.0
+ min_in_place_vel_theta: -4
+ acc_lim_theta: 3.2
+ acc_lim_x: 2.5
+ acc_lim_y: 2.5
+ yaw_goal_tolerance: 10
+ xy_goal_tolerance: 2.5
+ escape_vel: -2

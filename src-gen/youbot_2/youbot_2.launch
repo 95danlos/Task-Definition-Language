@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+    
+    <group ns="youbot_2">
+		
+		<node pkg="multi-robot-simulation" type="youbot_2_odometry_source.py" name="youbot_2_odometry_source" output="screen">
+			<remap from="/tf" to="/youbot_2/tf" />
+		</node>
+		<node pkg="multi-robot-simulation" type="youbot_2_base_controller.py" name="youbot_2_base_controller" output="screen">
+			<remap from="/tf" to="/youbot_2/tf" />
+		</node>
+		<node pkg="tf" type="static_transform_publisher" name="base_to_laser" output="screen"  args="0 0 0 0 0 0 base_link laser 100" >
+			<remap from="/tf" to="/youbot_2/tf" />
+		</node> 
+		<node pkg="gmapping" type="slam_gmapping" name="gmapping" output="screen"  >
+			<remap from="/tf" to="/youbot_2/tf" />
+		</node> 
+		<node pkg="move_base" type="move_base" name="move_base_node" output="screen"  >
+			<remap from="/tf" to="/youbot_2/tf" />
+			<rosparam file="$(find multi-robot-simulation)/src/youbot_2/move_base_node.yaml" command="load" />
+		</node> 
+	
+    </group>
+    
+    <node pkg="multi-robot-simulation" type="youbot_2_task_allocation_module.py" name="youbot_2_task_allocation_module" output="screen">
+	</node>
+
+
+
+</launch>
+
+

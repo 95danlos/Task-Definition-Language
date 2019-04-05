@@ -72,7 +72,9 @@ class TdlGenerator extends AbstractGenerator {
 	
 	'''
 	
+	«IF robot.setupMethod != null»
 	«"\t\t"»«robot.setupMethod.codeBlock»
+	«ENDIF»
 	
 			«FOR action : robot.simpleActions»
 			«IF action.position !== null»
@@ -87,6 +89,41 @@ class TdlGenerator extends AbstractGenerator {
 			«FOR line : HelperMethods.get_codeLines_from_file("Task Allocation Module Part 1", "/runTimeEngine/task_allocation_module.py")»
 			«line»
 			«ENDFOR»
+			
+			    robot_sensor_data_topic.publish(json.dumps(my_sensor_data))
+			
+			
+			«FOR line : HelperMethods.get_codeLines_from_file("Task Allocation Module Part 2", "/runTimeEngine/task_allocation_module.py")»
+			«line»
+			«ENDFOR»
+			
+			my_sensor_data = {
+					"robot_id": "«robot.name»",
+			        "topics": [
+			        «IF robot.publishedData !== null»
+			        «FOR sensorData : robot.publishedData.sensorData»
+			          {
+			            "topic_name" : "«sensorData.name»",
+			            "topic_value" : "0"
+			          },
+			          «ENDFOR»
+			          «ENDIF»
+			        ]
+			    }
+			
+			«IF robot.publishedData !== null»
+			«FOR sensorData : robot.publishedData.sensorData»
+			
+			def «sensorData.name»_callback(sensor_value_json):
+				sensor_value = json.loads(sensor_value_json.data)
+				for topic in my_sensor_data["topics"]:
+					if topic.get("topic_name") == "«sensorData.name»":
+						topic["topic_value"] = sensor_value
+				
+			rospy.Subscriber("«robot.name»/«sensorData.topic»", String, «sensorData.name»_callback)
+			
+			«ENDFOR»
+			«ENDIF»
 			
 			my_actions_table = {
 			        "actions": [
@@ -105,8 +142,11 @@ class TdlGenerator extends AbstractGenerator {
 			        "recovering": "0",
 			        "recovered_from_task_with_id": "0"
 			    }
+			    
+			    
+			robot_sensor_data_topic = rospy.Publisher('sensor_data', String, queue_size=10)
 			
-			«FOR line : HelperMethods.get_codeLines_from_file("Task Allocation Module Part 2", "/runTimeEngine/task_allocation_module.py")»
+			«FOR line : HelperMethods.get_codeLines_from_file("Task Allocation Module Part 3", "/runTimeEngine/task_allocation_module.py")»
 			«line»
 			«ENDFOR»
 	
@@ -201,15 +241,21 @@ class TdlGenerator extends AbstractGenerator {
 			{
 				"task_name" : "«task.name»",
 				"actions" : [
-				«FOR simpleAction : task.simpleActions »
+				«FOR simpleAction : task.simpleActions»
 				{
 					"action_name" : "«simpleAction.name»",
 					"action_status" : "not_doing",
 					«IF simpleAction.position !== null»
-					"positioning_action" : "True"
+					"positioning_action" : "True",
 					«ENDIF»
 					«IF simpleAction.position === null»
-					"positioning_action" : "False"
+					"positioning_action" : "False",
+					«ENDIF»
+					«IF simpleAction.id !== 0»
+					"action_id" : "«simpleAction.id»"
+					«ENDIF»			
+					«IF simpleAction.after !== 0»
+					"after_action" : "«simpleAction.after»"
 					«ENDIF»
 				},
 				«ENDFOR»
@@ -217,7 +263,7 @@ class TdlGenerator extends AbstractGenerator {
 			},
 			«ENDFOR»
 			]
-		}
+		},
 		«ENDFOR»
 		]
 	}
