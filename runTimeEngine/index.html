@@ -137,11 +137,17 @@
 				// Set event handlers.
 				ws.onopen = function() {
 					console.log("Server Online");
+					ws.send(JSON.stringify(["3", task_definitions]));
 				};
                 // Data from backend
 				ws.onmessage = function(e) {
 					var data = JSON.parse(e.data);
-					update_robots_position(data)
+					console.log(data)
+
+					// If flag = 2 sensor data from robots
+					if (data[0] === "2") {
+						update_robots_position(data)
+					}
 				}.bind(this);
 				ws.onclose = function() {
 					console.log("Server Closed");
@@ -180,14 +186,60 @@
 				});
 				
 			function start_mission() {
-				ws.send(JSON.stringify(tasks));
+
+				new_tasks = {
+		        "composite_tasks": []
+		    	}
+
+				this.tasks.tasks.forEach( new_task => {
+
+					new_composite_task = {
+                      "tasks": []
+					}
+
+					task_definitions.composite_tasks.forEach( composite_task_definition => {
+
+						if (composite_task_definition.composite_task_name == new_task.name) {
+
+								
+								i = 1
+								//new_composite_task_id = len(mission_table["composite_tasks"]) + 1
+								composite_task_definition.tasks.forEach( task => {
+									
+									new_composite_task["tasks"].push(
+									{
+										//"task_id": (str(new_composite_task_id) + "." + str(i)),
+										"task_name": task.task_name,
+										"robot_id": "0",
+										"auction_status": "open",
+										"task_status": "not_started",
+										"actions": task.actions,
+										"bids": [],
+										"ignore_robots": []
+									})
+								})
+								
+								i = i + 1
+								//new_composite_task["composite_task_id"] = str(new_composite_task_id)
+								new_composite_task["composite_task_status"] = "not_started"
+								new_composite_task["lat"] = new_task.lat
+								new_composite_task["lng"] = new_task.lng
+								//mission_table["composite_tasks"].append(new_composite_task)
+								new_tasks.composite_tasks.push(new_composite_task)
+						}
+						
+					})
+
+				})
+
+				ws.send(JSON.stringify(["1", new_tasks]));
 				this.tasks = {
 		        "tasks": []
 		    	}
 			}
 			
 			function update_robots_position(data) {
-				robots_sensor_data = data;
+				robots_sensor_data = data[1];
 				robots_sensor_data.robots.forEach(robot => {
 					lat = null
 					lng = null

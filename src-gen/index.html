@@ -83,6 +83,120 @@
 <input id="Play_Ball" class="button_task" type="button" value="Play_Ball" onclick="setTask('Play_Ball');" />
 <input id="Entertain_Humans" class="button_task" type="button" value="Entertain_Humans" onclick="setTask('Entertain_Humans');" />
 
+<script>
+task_definitions = {
+						"composite_tasks": [
+						{
+							"composite_task_name" : "Play_Ball",
+							"tasks": [
+							{
+								"task_name" : "defend_goal",
+								"actions" : [
+								{
+									"action_name" : "goTo",
+									"action_status" : "not_doing",
+									"positioning_action" : "True",
+								},
+								{
+									"action_name" : "locateGoal",
+									"action_status" : "not_doing",
+									"positioning_action" : "False",
+								},
+								{
+									"action_name" : "moveToGoal",
+									"action_status" : "not_doing",
+									"positioning_action" : "False",
+								},
+								{
+									"action_name" : "faceBall",
+									"action_status" : "not_doing",
+									"positioning_action" : "False",
+									"action_id" : "1"
+								},
+								]
+							},
+							{
+								"task_name" : "shot_ball",
+								"actions" : [
+								{
+									"action_name" : "goTo",
+									"action_status" : "not_doing",
+									"positioning_action" : "True",
+								},
+								{
+									"action_name" : "LocateBall",
+									"action_status" : "not_doing",
+									"positioning_action" : "False",
+								},
+								{
+									"action_name" : "moveToBall",
+									"action_status" : "not_doing",
+									"positioning_action" : "False",
+								},
+								{
+									"action_name" : "aim",
+									"action_status" : "not_doing",
+									"positioning_action" : "False",
+								},
+								{
+									"action_name" : "kickBall",
+									"action_status" : "not_doing",
+									"positioning_action" : "False",
+									"after_action" : "1"
+								},
+								]
+							},
+							]
+						},
+						{
+							"composite_task_name" : "Entertain_Humans",
+							"tasks": [
+							{
+								"task_name" : "spin_left",
+								"actions" : [
+								{
+									"action_name" : "goTo",
+									"action_status" : "not_doing",
+									"positioning_action" : "True",
+								},
+								{
+									"action_name" : "turnLeft",
+									"action_status" : "not_doing",
+									"positioning_action" : "False",
+								},
+								{
+									"action_name" : "turnLeft",
+									"action_status" : "not_doing",
+									"positioning_action" : "False",
+								},
+								]
+							},
+							{
+								"task_name" : "spin_right",
+								"actions" : [
+								{
+									"action_name" : "goTo",
+									"action_status" : "not_doing",
+									"positioning_action" : "True",
+								},
+								{
+									"action_name" : "turnRight",
+									"action_status" : "not_doing",
+									"positioning_action" : "False",
+								},
+								{
+									"action_name" : "turnRight",
+									"action_status" : "not_doing",
+									"positioning_action" : "False",
+								},
+								]
+							},
+							]
+						},
+						]
+					}
+</script>
+
 <!--
 	@start Index Part 2
 -->
@@ -115,11 +229,16 @@
 				// Set event handlers.
 				ws.onopen = function() {
 					console.log("Server Online");
+					ws.send(JSON.stringify(["3", task_definitions]));
 				};
                 // Data from backend
 				ws.onmessage = function(e) {
 					var data = JSON.parse(e.data);
-					update_robots_position(data)
+					console.log(data)
+					// If flag = 2 sensor data from robots
+					if (data[0] === "2") {
+						update_robots_position(data)
+					}
 				}.bind(this);
 				ws.onclose = function() {
 					console.log("Server Closed");
@@ -154,13 +273,47 @@
 				"lng: " + JSON.stringify(e.latlng.lng.toFixed(8));
 				});
 			function start_mission() {
-				ws.send(JSON.stringify(tasks));
+				new_tasks = {
+		        "composite_tasks": []
+		    	}
+				this.tasks.tasks.forEach( new_task => {
+					new_composite_task = {
+                      "tasks": []
+					}
+					task_definitions.composite_tasks.forEach( composite_task_definition => {
+						if (composite_task_definition.composite_task_name == new_task.name) {
+								i = 1
+								//new_composite_task_id = len(mission_table["composite_tasks"]) + 1
+								composite_task_definition.tasks.forEach( task => {
+									new_composite_task["tasks"].push(
+									{
+										//"task_id": (str(new_composite_task_id) + "." + str(i)),
+										"task_name": task.task_name,
+										"robot_id": "0",
+										"auction_status": "open",
+										"task_status": "not_started",
+										"actions": task.actions,
+										"bids": [],
+										"ignore_robots": []
+									})
+								})
+								i = i + 1
+								//new_composite_task["composite_task_id"] = str(new_composite_task_id)
+								new_composite_task["composite_task_status"] = "not_started"
+								new_composite_task["lat"] = new_task.lat
+								new_composite_task["lng"] = new_task.lng
+								//mission_table["composite_tasks"].append(new_composite_task)
+								new_tasks.composite_tasks.push(new_composite_task)
+						}
+					})
+				})
+				ws.send(JSON.stringify(["1", new_tasks]));
 				this.tasks = {
 		        "tasks": []
 		    	}
 			}
 			function update_robots_position(data) {
-				robots_sensor_data = data;
+				robots_sensor_data = data[1];
 				robots_sensor_data.robots.forEach(robot => {
 					lat = null
 					lng = null

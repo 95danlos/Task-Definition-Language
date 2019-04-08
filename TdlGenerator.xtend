@@ -62,7 +62,7 @@ class TdlGenerator extends AbstractGenerator {
         
         // Generate Backend and Index File
         if (task_nr > 0) {
-        	fsa.generateFile("/backend.py", generate_python_backend(resource))
+        	fsa.generateFile("/backend.py", get_python_backend(resource))
 			fsa.generateFile("/index.html", generate_web_interface(resource))
         }
 	}
@@ -72,7 +72,7 @@ class TdlGenerator extends AbstractGenerator {
 	
 	'''
 	
-	«IF robot.setupMethod != null»
+	«IF robot.setupMethod !== null»
 	«"\t\t"»«robot.setupMethod.codeBlock»
 	«ENDIF»
 	
@@ -149,6 +149,11 @@ class TdlGenerator extends AbstractGenerator {
 			«FOR line : HelperMethods.get_codeLines_from_file("Task Allocation Module Part 3", "/runTimeEngine/task_allocation_module.py")»
 			«line»
 			«ENDFOR»
+			
+							    
+			«FOR line : HelperMethods.get_codeLines_from_file("Task Allocation Module Part 4", "/runTimeEngine/task_allocation_module.py")»
+			«line»
+			«ENDFOR»
 	
 	'''
 	
@@ -222,53 +227,11 @@ class TdlGenerator extends AbstractGenerator {
 	
 	
 	
-	
-	def generate_python_backend(Resource resource) 
+	def get_python_backend(Resource resource) 
 	
 	'''
 	
 	«FOR line : HelperMethods.get_codeLines_from_file("Backend Part 1", "/runTimeEngine/backend.py")»
-	«line»
-	«ENDFOR»
-	
-	task_definitions = {
-		"composite_tasks": [
-		«FOR compositeTask : resource.allContents.toIterable.filter(CompositeTask)»
-		{
-			"composite_task_name" : "«compositeTask.name»",
-			"tasks": [
-			«FOR task : compositeTask.tasks»
-			{
-				"task_name" : "«task.name»",
-				"actions" : [
-				«FOR simpleAction : task.simpleActions»
-				{
-					"action_name" : "«simpleAction.name»",
-					"action_status" : "not_doing",
-					«IF simpleAction.position !== null»
-					"positioning_action" : "True",
-					«ENDIF»
-					«IF simpleAction.position === null»
-					"positioning_action" : "False",
-					«ENDIF»
-					«IF simpleAction.id !== 0»
-					"action_id" : "«simpleAction.id»"
-					«ENDIF»			
-					«IF simpleAction.after !== 0»
-					"after_action" : "«simpleAction.after»"
-					«ENDIF»
-				},
-				«ENDFOR»
-				]
-			},
-			«ENDFOR»
-			]
-		},
-		«ENDFOR»
-		]
-	}
-				    
-	«FOR line : HelperMethods.get_codeLines_from_file("Backend Part 2", "/runTimeEngine/backend.py")»
 	«line»
 	«ENDFOR»
 	
@@ -286,6 +249,45 @@ class TdlGenerator extends AbstractGenerator {
 	«FOR compositeTask : resource.allContents.toIterable.filter(CompositeTask)»
 				<input id="«compositeTask.name»" class="button_task" type="button" value="«compositeTask.name»" onclick="setTask('«compositeTask.name»');" />
 	«ENDFOR»
+	
+	<script>
+	task_definitions = {
+							"composite_tasks": [
+							«FOR compositeTask : resource.allContents.toIterable.filter(CompositeTask)»
+							{
+								"composite_task_name" : "«compositeTask.name»",
+								"tasks": [
+								«FOR task : compositeTask.tasks»
+								{
+									"task_name" : "«task.name»",
+									"actions" : [
+									«FOR simpleAction : task.simpleActions»
+									{
+										"action_name" : "«simpleAction.name»",
+										"action_status" : "not_doing",
+										«IF simpleAction.position !== null»
+										"positioning_action" : "True",
+										«ENDIF»
+										«IF simpleAction.position === null»
+										"positioning_action" : "False",
+										«ENDIF»
+										«IF simpleAction.id !== 0»
+										"action_id" : "«simpleAction.id»"
+										«ENDIF»			
+										«IF simpleAction.after !== 0»
+										"after_action" : "«simpleAction.after»"
+										«ENDIF»
+									},
+									«ENDFOR»
+									]
+								},
+								«ENDFOR» 
+								]
+							},
+							«ENDFOR»
+							]
+						}
+	</script>
 	
 	«FOR line : HelperMethods.get_codeLines_from_file("Index Part 2", "/runTimeEngine/index.html")»
 	«line»

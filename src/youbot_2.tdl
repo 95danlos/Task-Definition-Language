@@ -1,4 +1,4 @@
-robot youbot_2:       
+robot youbot_2:           
 
 	PublishedData:
 		lat: "lat"

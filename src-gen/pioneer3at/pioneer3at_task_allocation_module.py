@@ -167,6 +167,49 @@ def turnRight():
 """
     @start Task Allocation Module Part 1
 """
+def get_ros_master_ip_address_from_server():
+    server_response = None
+    ws = None
+    while server_response == None:
+        try:
+            import json
+            import sys, ast, math
+            from websocket import create_connection
+            ws = create_connection("ws://localhost:9001/")
+            ws.send(json.dumps(["0", robot_status_table.get("robot_id"), robot_status_table.get("robot_ip_address")]))
+            server_response =  ast.literal_eval(ws.recv())
+        except:
+          print('\033[94m' + "Trying to Connect to Server" + '\033[0m')
+          time.sleep(1)
+        finally:
+          ws.close()
+    return server_response
+def setup_connection_to_server():
+    try:
+        import websocket
+        import thread
+        import time
+        def on_message(ws, message):
+            print(message)
+        def on_error(ws, error):
+            print(error)
+        def on_close(ws):
+            print("disconnected from server")
+        def on_open(ws):
+            print("connected to server")
+            runtime_engine_master(ws)
+        websocket.enableTrace(True)
+        ws = websocket.WebSocketApp("ws://localhost:9001/",
+          on_message = on_message,
+          on_error = on_error,
+          on_close = on_close,
+          on_open = on_open
+        )
+        ws.run_forever()
+    except ImportError:
+        import _thread as thread
+    finally:
+        ws.close()
 from std_msgs.msg import String
 import threading
 import rospy
@@ -427,9 +470,202 @@ robot_sensor_data_topic = rospy.Publisher('sensor_data', String, queue_size=10)
 """
     @start Task Allocation Module Part 3
 """
-task_status = {}
-if __name__ == '__main__':
-    runtime_engine_slave()
+from std_msgs.msg import String
+import subprocess
+import threading
+import rospy
+import time
+import json
+def runtime_engine_master():
+    def start(ws):
+        #subprocess.Popen("export ROS_IP=10.0.0.10", shell=True).wait()
+        #subprocess.Popen("export ROS_HOSTNAME=10.0.0.10", shell=True).wait()
+        #subprocess.Popen("export ROS_MASTER_URI=http://10.0.0.10:11311", shell=True).wait()
+        #ROS_Master_Node_Process = subprocess.Popen(["roscore"])
+        #rospy.init_node('Master', anonymous=True)
+        # Tables sent from master
+        mission_table_topic = rospy.Publisher('mission_table', String, queue_size=10)
+        # Tables sent to master
+        rospy.Subscriber("bid_table", String, callback)
+        rospy.Subscriber("task_status", String, callback_2)
+        rospy.Subscriber("robot_status_table", String, callback_3)
+        rospy.Subscriber("sensor_data", String, callback_4)
+        # Start auction
+        # Start publishing tasks
+        rate = rospy.Rate(2)
+        while not rospy.is_shutdown():
+            mission_table_topic.publish(json.dumps(mission_table))
+            rate.sleep()
+            distribute_tasks()
+            ws.send(json.dumps(["2", robot_sensor_data_master]))
+    def callback(bid_table_json):
+        bid_table = json.loads(bid_table_json.data)
+        merge_bids(bid_table)
+    def callback_2(task_status_json):
+        task_status = json.loads(task_status_json.data)
+        update_task_status(task_status)
+    def callback_3(robot_status_table_json):
+        robot_status_table = json.loads(robot_status_table_json.data)
+        update_robot_status(robot_status_table)
+    def callback_4(sensor_data_json):
+        sensor_data = json.loads(sensor_data_json.data)
+        update_sensor_data(sensor_data)
+    def update_sensor_data(sensor_data):
+        found = False
+        for robot in robot_sensor_data_master["robots"]:
+          if robot.get("robot_id") == sensor_data.get("robot_id"):
+            robot["topics"] = sensor_data["topics"]
+            found = True
+        # If robot is not in sensor data table
+        if not found:
+          robot_sensor_data_master["robots"].append(sensor_data)
+    def update_task_status(task_status):
+        for composite_task in mission_table["composite_tasks"]:
+            for task in composite_task["tasks"]:
+              if task.get("task_id") == task_status.get("task_id"):
+                task["actions"] = task_status["actions"]
+                task["task_status"] = task_status["task_status"]
+                # check if task has failed
+                if (task_status["task_status"] == "Failed"):
+                  for robot in robot_status_table_master["robots"]:
+                    if robot.get("robot_id") == task_status.get("robot_id"):
+                      robot["recovering"] == "1"
+                  print("Master: Task Failed")
+    def update_robot_status(robot_status_table):
+      found = False
+      for robot in robot_status_table_master["robots"]:
+        if robot.get("robot_id") == robot_status_table.get("robot_id"):
+          robot = robot_status_table
+          found = True
+          robot["recovering"] = "0"
+          robot["recovered_from_task_with_id"] = "0"
+      if not found:
+        robot_status_table_master["robots"].append(robot_status_table)
+    """
+        Merge new bids into mission table
+    """
+    def merge_bids(bid_table_from_robot):
+      # Find each task the robot has bidded on
+      for task_to_bid_on in bid_table_from_robot["tasks"]:
+          # Find task in mission table                                    use get_task_by_id function   -----------------------------------------------
+          for composite_task in mission_table["composite_tasks"]:
+            for task in composite_task["tasks"]:
+              if task_to_bid_on.get("task_id") == task.get("task_id"):
+                # Check if bid from this robot allready exists
+                bid_allredy_exists = False
+                for bid in task["bids"]:
+                  # If bid allready exists override old bid
+                  if bid.get("robot_id") == task_to_bid_on.get("robot_id"):
+                    bid["bid_value"] = task_to_bid_on.get("bid_value")
+                    bid_allredy_exists = True
+                # If not add new bid
+                if not bid_allredy_exists:
+                  task["bids"].append({
+                        "robot_id" : task_to_bid_on.get("robot_id"),
+                        "bid_value" : task_to_bid_on.get("bid_value")
+                        })
+    """
+        Distribute tasks
+    """
+    def distribute_tasks():
+        for composite_task in mission_table["composite_tasks"]:
+            for task in composite_task["tasks"]:
+                # Check that task is biddable
+                if task.get("auction_status") == "open":
+                  highest_bidder = None
+                  highest_bidder_value = None
+                  for bid in task["bids"]:
+                    if bid.get("bid_value") > highest_bidder_value and robot_is_available(bid.get("robot_id")):
+                      highest_bidder = bid.get("robot_id")
+                      highest_bidder_value = bid.get("bid_value")
+                  # check that there where atleast one bid
+                  if highest_bidder is not None:
+                    task["robot_id"] = highest_bidder
+                    task["auction_status"] = "sold"
+    def robot_is_available(robot_id):
+        for composite_task in mission_table["composite_tasks"]:
+            for task in composite_task["tasks"]:
+                # Check if task is given to the robot and not completed yet
+                if task.get("robot_id") == robot_id and task.get("task_status") != "completed":
+                  return False
+        return True
+    def get_task_by_id(task_id):
+        for composite_task in mission_table["composite_tasks"]:
+            for task in composite_task["tasks"]:
+                if task.get("task_id") == task_id:
+                    return task
+    mission_table = {
+            "composite_tasks": []
+        }
+    robot_status_table_master = {
+            "robots": [
+            ]
+        }
+    robot_sensor_data_master = {
+            "robots": [
+            ]
+        }
+    def setup_connection_to_server():
+        ws = None
+        try:
+            import json
+            import sys, ast, math
+            from websocket import create_connection
+            ws = create_connection("ws://localhost:9001/")
+            t = threading.Thread(target=start_listening_on_server, args=(ws,))
+            t.daemon = True
+            t.start()
+            ws.send(json.dumps(["4"]))
+            start(ws)
+        except:
+          print('\033[94m' + "Trying to Connect to Server" + '\033[0m')
+          time.sleep(1)
+        finally:
+          ws.close()
+          print('\033[94m' + robot_status_table.get("robot_id") + ": Disconected from Server" + '\033[0m')
+    def start_listening_on_server(ws):
+            import json
+            import sys, ast, math
+            from websocket import create_connection
+            while True:
+                message =  ast.literal_eval(ws.recv())
+                # If flag == 1 new tasks recieved from client
+                if (message[0] == "1"):
+                    for new_composite_task in message[1]["composite_tasks"]:
+                        i = 1
+                        new_composite_task_id = len(mission_table["composite_tasks"]) + 1
+                        for task in new_composite_task["tasks"]:
+                            task["task_id"] = (str(new_composite_task_id) + "." + str(i))
+                            i = i + 1
+                        new_composite_task["composite_task_id"] = str(new_composite_task_id)
+                        mission_table["composite_tasks"].append(new_composite_task)
+    setup_connection_to_server()
 """
     @end Task Allocation Module Part 3
+"""
+"""
+    @start Task Allocation Module Part 4
+"""
+task_status = {}
+if __name__ == '__main__':
+    import socket    
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    robot_status_table["robot_ip_address"] = s.getsockname()[0]
+    s.close() 
+    message = get_ros_master_ip_address_from_server()
+    # If leader id = this robots id, start runtime engine master
+    if message[0] == robot_status_table.get("robot_id"):
+      print('\033[94m' + robot_status_table.get("robot_id") + ": Starting Master and Connecting to Server" + '\033[0m')
+      # Start task
+      t = threading.Thread(target=runtime_engine_master)
+      t.daemon = True
+      t.start()
+      robot_status_table["master"] = "True"
+    else:
+      print('\033[94m' + robot_status_table.get("robot_id") + ": Connecting to Master" + '\033[0m')
+      #subprocess.Popen("export ROS_MASTER_URI=http://" + message[0] + ":11311", shell=True).wait()
+    runtime_engine_slave()
+"""
+    @end Task Allocation Module Part 4
 """

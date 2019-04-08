@@ -1,4 +1,4 @@
-robot turtlebot:     
+robot turtlebot:        
 
 	PublishedData:
 		lat: "lat"

@@ -1,5 +1,4 @@
-
-compositeTask Play_Ball(lat,lng):          
+compositeTask Play_Ball(lat,lng):                  
               
 	task defend_goal():
 		goTo(lat,lng):
