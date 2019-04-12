@@ -174,16 +174,15 @@ def start_executing_task():
         if max_time == None:
             max_time = 999999
             
-        # Check if action should wait for another robots action to finish before starting
-        if(action.get("after_action")!= None):
-          while (not check_action_dependency(action)):
-            time.sleep(0.1)
+        # Check if action should wait for another robots action to finish before starting, sync or atfer
+        while (not action_is_ready_to_start(action)):
+          time.sleep(0.1)
 
         # Start action
         if(action.get("positioning_action")=="True"):
           t = threading.Thread(target=globals()[action.get("action_name")](task_status.get("lat"), task_status.get("lng")))
         else:
-          t = threading.Thread(target=globals()[action.get("action_name")]())
+          t = threading.Thread(target=globals()[action.get("action_name")](*action.get("arguments")))
         t.start()
 
         i = 0
@@ -246,12 +245,12 @@ def get_task_by_id(task_id, mission_table):
 def calculate_bid(composite_task):
     from math import sin, cos, sqrt, atan2, radians
     
-    my_lat = ""
-    my_lng = ""
+    my_lat = 0.0
+    my_lng = 0.0
     for topic in my_sensor_data["topics"]:
-        if topic.get("topic_name") == "lat":
+        if topic.get("topic_name") == "lat" and topic.get("topic_value") != "0":
             my_lat = topic.get("topic_value")
-        if topic.get("topic_name") == "lng":
+        if topic.get("topic_name") == "lng" and topic.get("topic_value") != "0":
             my_lng = topic.get("topic_value")
 
 
@@ -276,16 +275,30 @@ def calculate_bid(composite_task):
     return -d
 
 
-def check_action_dependency(action):
-    if(action.get("after_action")!= None):
+def action_is_ready_to_start(action):
+    ready = True
+    if action.get("after_action")!= None:
       for composite_task in mission_table_g["composite_tasks"]:
         if composite_task.get("composite_task_id") == task_status.get("composite_task_id"):
           for task in composite_task["tasks"]:
             for action_2 in task["actions"]:
               if action_2.get("action_id") != None and action_2.get("action_id") == action.get("after_action"):
-                if action_2.get("action_status") == "completed":
-                  return True
-    return False
+                if action_2.get("action_status") != "completed":
+                  ready = False
+    
+    if action.get("sync_number")!= None:
+      for composite_task in mission_table_g["composite_tasks"]:
+        if composite_task.get("composite_task_id") == task_status.get("composite_task_id"):
+          for task in composite_task["tasks"]:
+            action_2_prev = None
+            for action_2 in task["actions"]:
+              if action_2.get("sync_number") != None and action_2.get("sync_number") == action.get("sync_number"):
+                if action_2_prev != None and action_2_prev.get("action_status") != "completed":
+                  ready = False
+              
+              action_2_prev = action_2
+
+    return ready
 
 """
 

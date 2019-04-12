@@ -22,7 +22,18 @@ Task:
 ;
 
 SimpleActionReference:
-	name=ID ( "():" | position="(lat,lng):" | "(id="id=INT"):" | "(after("after=INT")):" )  
+	name=ID 
+	( 
+		"(" ( ("id="id=STRING","?)? ("sync("sync=INT")"?","?)? ("after("after=STRING")"?","?)? ("args=("args+=Argument*")"?","?)? ) ( "):" | ")):" ) 
+	| 
+		position="(lat,lng):"
+	| 
+		"():"
+	)   
+;
+
+Argument:
+	name=STRING ","?
 ;
 
 
@@ -45,12 +56,19 @@ SetupMethod:
 ;
 
 SimpleAction:
-	"simpleAction" name=ID ("():" | position="(lat,lng):") 
+	"simpleAction" name=ID ( "("(params+=Param*)"):" | position="(lat,lng):" | "():" ) 
 	BEGIN
 		codeBlock = CodeBlock
 	END
 	
 ;
+
+
+Param:
+	name=ID ","? 
+;
+
+
 
 ProcessingNode:
 	(

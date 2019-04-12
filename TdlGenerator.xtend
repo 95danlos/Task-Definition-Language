@@ -77,11 +77,11 @@ class TdlGenerator extends AbstractGenerator {
 	«ENDIF»
 	
 			«FOR action : robot.simpleActions»
-			«IF action.position !== null»
-			def «action.name»(lat,lng):
-			«ENDIF»
 			«IF action.position === null»
-			def «action.name»():
+			def «action.name»(«IF action.params !== null»«FOR param : action.params SEPARATOR ','»«param.name»«ENDFOR»«ENDIF»):
+			«ENDIF»
+			«IF action.position !== null» 
+			def «action.name»(lat,lng):
 			«ENDIF»
 			«"\t\t"»«action.codeBlock»
 			«ENDFOR»
@@ -271,12 +271,16 @@ class TdlGenerator extends AbstractGenerator {
 										«IF simpleAction.position === null»
 										"positioning_action" : "False",
 										«ENDIF»
-										«IF simpleAction.id !== 0»
-										"action_id" : "«simpleAction.id»"
-										«ENDIF»			
-										«IF simpleAction.after !== 0»
-										"after_action" : "«simpleAction.after»"
+										«IF simpleAction.id !== null»
+										"action_id" : "«simpleAction.id»",
 										«ENDIF»
+										«IF simpleAction.sync !== 0»
+										"sync_number" : "«simpleAction.sync»",
+										«ENDIF»			
+										«IF simpleAction.after !== null»
+										"after_action" : "«simpleAction.after»",
+										«ENDIF»
+										"arguments": [«FOR argument : simpleAction.args SEPARATOR ','»"«argument.name»"«ENDFOR»],
 									},
 									«ENDFOR»
 									]
