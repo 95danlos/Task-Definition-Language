@@ -1,19 +1,3 @@
-"""
-export ROS_IP=10.0.0.19
-export ROS_HOSTNAME=10.0.0.19
-export ROS_MASTER_URI=http://10.0.0.19:11311
-
-import socket
-print(socket.gethostbyname(socket.gethostname()))
-
-IpAddresss = subprocess.check_output(["hostname", "-I"])    // Use HostName insted of ip
-print(IpAddresss)
-
-robot id --> unique
-
-
-"""
-
 
 
 """
@@ -22,7 +6,7 @@ robot id --> unique
 
 """
 
-
+SERVER_IP_ADDRESS = "10.0.0.113"
 
 def get_ros_master_ip_address_from_server():
     server_response = None
@@ -32,11 +16,11 @@ def get_ros_master_ip_address_from_server():
             import json
             import sys, ast, math
             from websocket import create_connection
-            ws = create_connection("ws://localhost:9001/")
+            ws = create_connection("ws://" + SERVER_IP_ADDRESS + ":9001/")
             ws.send(json.dumps(["0", robot_status_table.get("robot_id"), robot_status_table.get("robot_ip_address")]))
-            server_response =  ast.literal_eval(ws.recv())
+            server_response = ast.literal_eval(ws.recv())
         except:
-          print('\033[94m' + "Trying to Connect to Server" + '\033[0m')
+          print('\033[94m' + robot_status_table.get("robot_id") + ": Trying to Connect to Server" + '\033[0m')
           time.sleep(2)
         finally:
           if ws != None:
@@ -99,20 +83,20 @@ def callback(mission_table_string, args):
 
 
 """
-    Search for new biddable tasks, 
-    @Algorithm for calculating bid value
+    Search for new biddable tasks
 """
 def find_new_biddable_tasks(mission_table):
-
+    
     bid_table = {
         "tasks": []
     }
     
     for composite_task in mission_table["composite_tasks"]:
-        for task in composite_task["tasks"]:
-    
-            # If task is biddable
-            if task.get("auction_status") == "open":
+
+        # If task is not sold yet
+        if composite_task.get("is_sold") == "False":
+
+            for task in composite_task["tasks"]:
                 
                 # If task is doable by this robot send bid
                 if check_if_task_is_doable(task.get("task_id"), mission_table):
@@ -121,7 +105,6 @@ def find_new_biddable_tasks(mission_table):
                         "robot_id" : robot_status_table.get("robot_id"),
                         "bid_value" : calculate_bid(composite_task)
                         })
-
     return bid_table
 
 
@@ -242,6 +225,10 @@ def get_task_by_id(task_id, mission_table):
                 return task
   
   
+  
+"""
+    @Bid_Function for calculating bid based on the distance to the task
+"""
 def calculate_bid(composite_task):
     from math import sin, cos, sqrt, atan2, radians
     
@@ -321,6 +308,7 @@ import rospy
 import time
 import json
 def runtime_engine_master():
+    
     def start(ws):
         #subprocess.Popen("export ROS_IP=10.0.0.10", shell=True).wait()
         #subprocess.Popen("export ROS_HOSTNAME=10.0.0.10", shell=True).wait()
@@ -340,20 +328,25 @@ def runtime_engine_master():
         while not rospy.is_shutdown():
             mission_table_topic.publish(json.dumps(mission_table))
             rate.sleep()
-            distribute_tasks()
+            distribute_tasks(mission_table)
             ws.send(json.dumps(["2", robot_sensor_data_master]))
+            
     def callback(bid_table_json):
         bid_table = json.loads(bid_table_json.data)
         merge_bids(bid_table)
+        
     def callback_2(task_status_json):
         task_status = json.loads(task_status_json.data)
         update_task_status(task_status)
+        
     def callback_3(robot_status_table_json):
         robot_status_table = json.loads(robot_status_table_json.data)
         update_robot_status(robot_status_table)
+        
     def callback_4(sensor_data_json):
         sensor_data = json.loads(sensor_data_json.data)
         update_sensor_data(sensor_data)
+        
     def update_sensor_data(sensor_data):
         found = False
         for robot in robot_sensor_data_master["robots"]:
@@ -363,6 +356,7 @@ def runtime_engine_master():
         # If robot is not in sensor data table
         if not found:
           robot_sensor_data_master["robots"].append(sensor_data)
+          
     def update_task_status(task_status):
         for composite_task in mission_table["composite_tasks"]:
             for task in composite_task["tasks"]:
@@ -375,6 +369,7 @@ def runtime_engine_master():
                     if robot.get("robot_id") == task_status.get("robot_id"):
                       robot["recovering"] == "1"
                   print("Master: Task Failed")
+                  
     def update_robot_status(robot_status_table):
       found = False
       for robot in robot_status_table_master["robots"]:
@@ -385,6 +380,8 @@ def runtime_engine_master():
           robot["recovered_from_task_with_id"] = "0"
       if not found:
         robot_status_table_master["robots"].append(robot_status_table)
+        
+        
     """
         Merge new bids into mission table
     """
@@ -408,24 +405,91 @@ def runtime_engine_master():
                         "robot_id" : task_to_bid_on.get("robot_id"),
                         "bid_value" : task_to_bid_on.get("bid_value")
                         })
+                  
+                  
     """
         Distribute tasks
     """
-    def distribute_tasks():
-        for composite_task in mission_table["composite_tasks"]:
-            for task in composite_task["tasks"]:
-                # Check that task is biddable
-                if task.get("auction_status") == "open":
-                  highest_bidder = None
-                  highest_bidder_value = None
-                  for bid in task["bids"]:
-                    if bid.get("bid_value") > highest_bidder_value and robot_is_available(bid.get("robot_id")):
-                      highest_bidder = bid.get("robot_id")
-                      highest_bidder_value = bid.get("bid_value")
-                  # check that there where atleast one bid
-                  if highest_bidder is not None:
-                    task["robot_id"] = highest_bidder
-                    task["auction_status"] = "sold"
+    def distribute_tasks(mission_table_): 
+
+        more_doable_tasks = True
+
+        # While there are more doable composite tasks
+        while more_doable_tasks:
+
+          best_composite_task = None
+          best_composite_task_value = 0
+
+          # For each composite task
+          for composite_task in mission_table_["composite_tasks"]:
+
+              # If composite task is not sold
+              if composite_task.get("is_sold") == "False":
+
+                composite_task_is_doable = True
+                composite_task_value = 0
+
+                # For each sub task
+                for sub_task in composite_task["tasks"]:
+
+                    highest_bidder = None
+                    highest_bid = None
+
+                    # For each bid
+                    for bid in sub_task["bids"]:
+
+                      # If bid is higher then the highest bid so far and the robot is available
+                      if bid.get("bid_value") > highest_bid and robot_is_available(bid.get("robot_id")):
+                          
+                        highest_bidder = bid.get("robot_id")
+                        highest_bid = bid.get("bid_value")
+
+                    # check that there where atleast one bid
+                    if highest_bidder is not None:
+
+                      # Temporarily allocate the task to make the robot unavailable for other sub tasks
+                      sub_task["robot_id"] = highest_bidder
+                      composite_task_value += highest_bid
+
+                    else:
+                      composite_task_is_doable = False
+
+                if composite_task_is_doable and (composite_task_value > best_composite_task_value or best_composite_task == None):
+                  best_composite_task = composite_task
+                  best_composite_task_value = composite_task_value
+
+                for sub_task in composite_task["tasks"]:
+                  sub_task["robot_id"] = "0"
+
+
+          if best_composite_task != None:
+
+            best_composite_task["is_sold"] = "True"
+
+            print('\033[94m' + "New Task Started: " + best_composite_task.get("name") + '\033[0m')
+            print('\033[94m' + "Robots: " + '\033[0m')
+
+            for sub_task in best_composite_task["tasks"]:
+
+              highest_bidder = None
+              highest_bid = None
+
+              # For each bid
+              for bid in sub_task["bids"]:
+
+                # If bid is higher then highest bid so far and robot is available
+                if bid.get("bid_value") > highest_bid and robot_is_available(bid.get("robot_id")):
+                  highest_bidder = bid.get("robot_id")
+                  highest_bid = bid.get("bid_value")
+
+              sub_task["robot_id"] = highest_bidder
+
+              print('\033[94m' + "  " + highest_bidder + '\033[0m')
+
+          else:
+            more_doable_tasks = False
+            
+            
     def robot_is_available(robot_id):
         for composite_task in mission_table["composite_tasks"]:
             for task in composite_task["tasks"]:
@@ -433,11 +497,15 @@ def runtime_engine_master():
                 if task.get("robot_id") == robot_id and task.get("task_status") != "completed":
                   return False
         return True
+    
+    
     def get_task_by_id(task_id):
         for composite_task in mission_table["composite_tasks"]:
             for task in composite_task["tasks"]:
                 if task.get("task_id") == task_id:
                     return task
+                
+                
     mission_table = {
             "composite_tasks": []
         }
@@ -452,25 +520,22 @@ def runtime_engine_master():
     
     
     def setup_connection_to_server():
-        server_response = None
         ws = None
-        while server_response == None:
+        while ws == None:
             try:
                 import json
                 import sys, ast, math
                 from websocket import create_connection
-                ws = create_connection("ws://localhost:9001/")
-                t = threading.Thread(target=start_listening_on_server, args=(ws,))
-                t.daemon = True
-                t.start()
-                ws.send(json.dumps(["4"]))
-                start(ws)
+                ws = create_connection("ws://" + SERVER_IP_ADDRESS + ":9001/")
             except:
-              print('\033[94m' + "Trying to Connect to Server" + '\033[0m')
+              print('\033[94m' + robot_status_table.get("robot_id") + ": Trying to Connect to Server" + '\033[0m')
               time.sleep(2)
-            finally:
-              if ws != None:
-                  ws.close()
+
+        t = threading.Thread(target=start_listening_on_server, args=(ws,))
+        t.daemon = True
+        t.start()
+        ws.send(json.dumps(["4"]))
+        start(ws)
 
 
     def start_listening_on_server(ws):
@@ -525,11 +590,11 @@ if __name__ == '__main__':
 
     message = get_ros_master_ip_address_from_server()
 
-    # If leader id = this robots id, start runtime engine master
+    # If leader id == this robots id
     if message[0] == robot_status_table.get("robot_id"):
-      print('\033[94m' + robot_status_table.get("robot_id") + ": Starting Master and Connecting to Server" + '\033[0m')
+      print('\033[94m' + robot_status_table.get("robot_id") + ": Starting Master" + '\033[0m')
 
-      # Start task
+      # start runtime engine master
       t = threading.Thread(target=runtime_engine_master)
       t.daemon = True
       t.start()

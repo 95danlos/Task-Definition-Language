@@ -69,7 +69,6 @@ def message_received(client, server, message):
             server.send_message(leader_client, json.dumps(message))
 
     if (message[0] == "4"):
-        print('\033[94m' + "Leader Connected" + '\033[0m')
         global leader_client
         leader_client = client
         server.send_message(client, json.dumps(["11"]))

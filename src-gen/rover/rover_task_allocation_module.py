@@ -1,167 +1,56 @@
 #!/usr/bin/python
-import rospy
-import tf
-import math
+import pigpio
+global pi
+pi = pigpio.pi()
+pi.set_mode(12, pigpio.OUTPUT)
+pi.set_mode(13, pigpio.OUTPUT)
+pi.set_PWM_frequency(12, 8000)
+pi.set_PWM_frequency(13, 8000)
+pi.set_mode(22, pigpio.OUTPUT)
+pi.set_mode(23, pigpio.OUTPUT)
+pi.set_mode(24, pigpio.OUTPUT)
+pi.set_mode(25, pigpio.OUTPUT)
+pi.write(22, 1)
+pi.write(23, 1)
+pi.write(24, 0)
+pi.write(25, 0)
+pi.set_PWM_dutycycle(12, 0)
+pi.set_PWM_dutycycle(13, 0)
 import time
-from std_msgs.msg import String
-from tf2_msgs.msg import TFMessage
-from math import sin, cos, pi
-from nav_msgs.msg import Odometry
-from sensor_msgs.msg import LaserScan
-from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3, TransformStamped
-from geometry_msgs.msg import Pose
-from geometry_msgs.msg import Twist
-from gazebo_msgs.srv import GetModelState
-from gazebo_msgs.srv import SetModelState
-from gazebo_msgs.msg import ModelState
-from geometry_msgs.msg import *
-from geometry_msgs.msg import *
-from gazebo_msgs.srv import *
-from gazebo_msgs.msg import *
-rospy.init_node('youbot', anonymous=True)
-set_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
-twist = Twist()
-state = ModelState()
-state.model_name = "youbot"
-state.reference_frame = "youbot"
-def goTo(lat,lng):
-		import actionlib
-		from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
-		client = actionlib.SimpleActionClient('youbot/move_base', MoveBaseAction)  
-		client.wait_for_server()
-		goal = MoveBaseGoal()
-		goal.target_pose.header.frame_id = "map"
-		goal.target_pose.pose.position.x = lng
-		goal.target_pose.pose.position.y = lat  
-		goal.target_pose.pose.orientation.w = 1
-		client.send_goal(goal)
-		r = rospy.Rate(0.5)
-		status = ""
-		while (not rospy.is_shutdown() and status != "Goal reached."):
-		  status = client.get_goal_status_text()
-		  r.sleep()
-def moveToGoal():
-		get_state = rospy.ServiceProxy("/gazebo/get_model_state", GetModelState)
-		set_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
-		pose = Pose()
-		state = ModelState()
-		state.model_name = "youbot"
-		state.reference_frame = "map"
-		rospy.wait_for_service("/gazebo/get_model_state")
-		get_state = rospy.ServiceProxy("/gazebo/get_model_state", GetModelState)
-		response = get_state("robocup_3d_goal", "")
-		response_2 = get_state("soccer_ball", "")
-		quaternion = (
-			response.pose.orientation.x,
-			response.pose.orientation.y,
-			response.pose.orientation.z,
-			response.pose.orientation.w)
-		euler = tf.transformations.euler_from_quaternion(quaternion)
-		roll = euler[0]
-		pitch = euler[1]
-		yaw = euler[2]
-		yaw = yaw - 3.4
-		quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
-		pose.position.x = -1.8
-		pose.position.y = 12
-		pose.orientation.x = quaternion[0]
-		pose.orientation.y = quaternion[1]
-		pose.orientation.z = quaternion[2]
-		pose.orientation.w = quaternion[3]
-		state.pose = pose
-		ret = set_state(state)
-def moveToBall():
-		get_state = rospy.ServiceProxy("/gazebo/get_model_state", GetModelState)
-		set_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
-		pose = Pose()
-		state = ModelState()
-		state.model_name = "youbot"
-		state.reference_frame = "map"
-		rospy.wait_for_service("/gazebo/get_model_state")
-		get_state = rospy.ServiceProxy("/gazebo/get_model_state", GetModelState)
-		response = get_state("robocup_3d_goal", "")
-		response_2 = get_state("soccer_ball", "")
-		quaternion = (
-			response.pose.orientation.x,
-			response.pose.orientation.y,
-			response.pose.orientation.z,
-			response.pose.orientation.w)
-		euler = tf.transformations.euler_from_quaternion(quaternion)
-		roll = euler[0]
-		pitch = euler[1]
-		yaw = euler[2]
-		yaw = yaw - 3.6
-		quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
-		pose.position.x = -2.8
-		pose.position.y = 8.2
-		pose.orientation.x = quaternion[0]
-		pose.orientation.y = quaternion[1]
-		pose.orientation.z = quaternion[2]
-		pose.orientation.w = quaternion[3]
-		state.pose = pose
-		ret = set_state(state)
-def kickBall():
-		state = ModelState()
-		state.model_name = "youbot"
-		state.reference_frame = "youbot"
-		set_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
-		pose = Pose()
-		twist = Twist()
-		time.sleep(2)
-		twist.linear.x = -3
-		twist.linear.y = 0
-		twist.angular.z = 0
-		state.twist = twist
-		ret = set_state(state)
-		time.sleep(1)
-		twist.linear.x = 0
-		twist.linear.y = 0
-		twist.angular.z = 0
-		state.twist = twist
-		ret = set_state(state)
-def faceBall():
-		time.sleep(1)
-def aim():
-		time.sleep(1)
+import rospy
+rospy.init_node('rover', anonymous=True)
 def moveForward(_time):
-		twist.linear.x = 2
-		twist.angular.z = 0
-		state.twist = twist
-		ret = set_state(state)
+		pi.set_PWM_dutycycle(12, 150)
+		pi.set_PWM_dutycycle(13, 150)
 		time.sleep(float(_time) * 0.001)
-		twist.linear.x = 0
-		twist.angular.z = 0
-		state.twist = twist
-		ret = set_state(state)
+		pi.set_PWM_dutycycle(12, 0)
+		pi.set_PWM_dutycycle(13, 0)
 def moveBackwards(_time):
-		twist.linear.x = -2
-		twist.angular.z = 0
-		state.twist = twist
-		ret = set_state(state)
+		pi.write(24, 1)
+		pi.write(25, 1)
+		pi.set_PWM_dutycycle(12, 150)
+		pi.set_PWM_dutycycle(13, 150)
 		time.sleep(float(_time) * 0.001)
-		twist.linear.x = 0
-		twist.angular.z = 0
-		state.twist = twist
-		ret = set_state(state)
-def turnLeft(_degrees):
-		twist.linear.x = 0
-		twist.angular.z = 4
-		state.twist = twist
-		ret = set_state(state)
-		time.sleep(float(_degrees) * 0.02)
-		twist.linear.x = 0
-		twist.angular.z = 0
-		state.twist = twist
-		ret = set_state(state)
-def turnRight(_degrees):
-		twist.linear.x = 0
-		twist.angular.z = -4
-		state.twist = twist
-		ret = set_state(state)
-		time.sleep(float(_degrees) * 0.02)
-		twist.linear.x = 0
-		twist.angular.z = 0
-		state.twist = twist
+		pi.set_PWM_dutycycle(12, 0)
+		pi.set_PWM_dutycycle(13, 0)
+		pi.write(24, 0)
+		pi.write(25, 0)
+def turnLeft(degrees):
+		pi.write(24, 1)
+		pi.set_PWM_dutycycle(12, 150)
+		pi.set_PWM_dutycycle(13, 150)
+		time.sleep(float(degrees) * 0.023)
+		pi.set_PWM_dutycycle(12, 0)
+		pi.set_PWM_dutycycle(13, 0)
+		pi.write(24, 0)
+def turnRight(degrees):
+		pi.write(25, 1)
+		pi.set_PWM_dutycycle(12, 150)
+		pi.set_PWM_dutycycle(13, 150)
+		time.sleep(float(degrees) * 0.023)
+		pi.set_PWM_dutycycle(12, 0)
+		pi.set_PWM_dutycycle(13, 0)
+		pi.write(25, 0)
 def print_(arg1,arg2):
 		print(arg1 + ", " + arg2)
 """
@@ -380,7 +269,7 @@ def action_is_ready_to_start(action):
     @end Task Allocation Module Part 2
 """
 my_sensor_data = {
-		"robot_id": "youbot",
+		"robot_id": "rover",
         "topics": [
         {
           "topic_name" : "lat",
@@ -397,39 +286,15 @@ def lat_callback(sensor_value_json):
 	for topic in my_sensor_data["topics"]:
 		if topic.get("topic_name") == "lat":
 			topic["topic_value"] = sensor_value
-rospy.Subscriber("youbot/lat", String, lat_callback)
+rospy.Subscriber("rover/lat", String, lat_callback)
 def lng_callback(sensor_value_json):
 	sensor_value = json.loads(sensor_value_json.data)
 	for topic in my_sensor_data["topics"]:
 		if topic.get("topic_name") == "lng":
 			topic["topic_value"] = sensor_value
-rospy.Subscriber("youbot/lng", String, lng_callback)
+rospy.Subscriber("rover/lng", String, lng_callback)
 my_actions_table = {
         "actions": [
-        {
-          "action_name" : "goTo",
-          "action_status" : "not_doing"
-        },
-        {
-          "action_name" : "moveToGoal",
-          "action_status" : "not_doing"
-        },
-        {
-          "action_name" : "moveToBall",
-          "action_status" : "not_doing"
-        },
-        {
-          "action_name" : "kickBall",
-          "action_status" : "not_doing"
-        },
-        {
-          "action_name" : "faceBall",
-          "action_status" : "not_doing"
-        },
-        {
-          "action_name" : "aim",
-          "action_status" : "not_doing"
-        },
         {
           "action_name" : "moveForward",
           "action_status" : "not_doing"
@@ -453,7 +318,7 @@ my_actions_table = {
         ]
     }
 robot_status_table = {
-        "robot_id": "youbot",
+        "robot_id": "rover",
         "ip_address": "0",
         "recovering": "0",
         "recovered_from_task_with_id": "0"

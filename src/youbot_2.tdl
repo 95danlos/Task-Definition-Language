@@ -1,4 +1,4 @@
-robot youbot_2:           
+robot youbot_2:                     
 
 	PublishedData:
 		lat: "lat"
@@ -8,19 +8,18 @@ robot youbot_2:
 		import rospy
 		import tf
 		import math
+		import time
 		from std_msgs.msg import String
 		from tf2_msgs.msg import TFMessage
 		from math import sin, cos, pi
 		from nav_msgs.msg import Odometry
 		from sensor_msgs.msg import LaserScan
 		from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3, TransformStamped
-		from time import sleep as _sleep
 		from geometry_msgs.msg import Pose
 		from geometry_msgs.msg import Twist
 		from gazebo_msgs.srv import GetModelState
 		from gazebo_msgs.srv import SetModelState
 		from gazebo_msgs.msg import ModelState
-		from time import sleep as _sleep
 		from geometry_msgs.msg import *
 		from geometry_msgs.msg import *
 		from gazebo_msgs.srv import *
@@ -143,7 +142,7 @@ robot youbot_2:
 		pose = Pose()
 		twist = Twist()
 
-		_sleep(2)
+		time.sleep(2)
 
 		twist.linear.x = -3
 		twist.linear.y = 0
@@ -151,7 +150,7 @@ robot youbot_2:
 		state.twist = twist
 		ret = set_state(state)
 
-		_sleep(1)
+		time.sleep(1)
 
 		twist.linear.x = 0
 		twist.linear.y = 0
@@ -161,20 +160,20 @@ robot youbot_2:
 		
 		
 	simpleAction faceBall():
-		_sleep(1)
+		time.sleep(1)
 		
 		
 	simpleAction aim():
-		_sleep(1)
+		time.sleep(1) 
 	
 	
-	simpleAction moveForward():
+	simpleAction moveForward(_time):
 		twist.linear.x = 2
 		twist.angular.z = 0
 		state.twist = twist
 		
 		ret = set_state(state)
-		_sleep(2)
+		time.sleep(float(_time) * 0.001)
 		
 		twist.linear.x = 0
 		twist.angular.z = 0
@@ -183,13 +182,13 @@ robot youbot_2:
 		ret = set_state(state)
 		
 		
-	simpleAction moveBackwards():
+	simpleAction moveBackwards(_time):
 		twist.linear.x = -2
 		twist.angular.z = 0
 		state.twist = twist
 		
 		ret = set_state(state)
-		_sleep(2)
+		time.sleep(float(_time) * 0.001)
 		
 		twist.linear.x = 0
 		twist.angular.z = 0
@@ -198,13 +197,13 @@ robot youbot_2:
 		ret = set_state(state)
 		
 		
-	simpleAction turnLeft():
+	simpleAction turnLeft(_degrees):
 		twist.linear.x = 0
 		twist.angular.z = 4
 		state.twist = twist
 		
 		ret = set_state(state)
-		_sleep(2)
+		time.sleep(float(_degrees) * 0.02)
 		
 		twist.linear.x = 0
 		twist.angular.z = 0
@@ -213,20 +212,21 @@ robot youbot_2:
 		ret = set_state(state)
 		
 		
-	simpleAction turnRight(): 
+	simpleAction turnRight(_degrees): 
 		twist.linear.x = 0
 		twist.angular.z = -4
 		state.twist = twist
 		
 		ret = set_state(state)
-		_sleep(2)
+		time.sleep(float(_degrees) * 0.02)
 		
 		twist.linear.x = 0
 		twist.angular.z = 0
 		state.twist = twist
-		ret = set_state(state)
 		
-		
+
+	simpleAction print_(arg1, arg2):     
+		print(arg1 + ", " + arg2) 		
  
 		
 		
@@ -234,14 +234,13 @@ robot youbot_2:
 		
 		import rospy
 		import tf
+		import time
 		from std_msgs.msg import String
 		from tf2_msgs.msg import TFMessage
 		from math import sin, cos, pi
 		from nav_msgs.msg import Odometry
 		from sensor_msgs.msg import LaserScan
 		from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3, TransformStamped
-		
-		from time import sleep as _sleep
 		from geometry_msgs.msg import Pose
 		from geometry_msgs.msg import Twist
 		from gazebo_msgs.srv import GetModelState
