@@ -6,8 +6,41 @@ The Task Definition Language is a domain-specific language for the development o
 
 <br />
 
-## Simulator Setup
+## Simulation Setup
 
+Setup on simulation requires linux and ROS. Follow the ROS setup tutorial at
+
+Then install the Gazebo simulator by following the steps at http://gazebosim.org/tutorials?tut=ros_installing
+
+
+
+```
+sudo apt-get install ros-"your ros distro"-"Gazebo"
+```
+
+
+- pull project
+
+- in the eclipse menu bar click help --> install new software --> add --> local --> select plugin folder, if the plugin is not listed uncheck "Group item by category"
+
+
+
+- create catkin ws
+- create a new catkin project called multi-robot-simulation
+
+- copy files from the gihub folder called multi-robot-simulation over to the new created project
+
+- make files executable with chmod +x -R ~/catkin_ws/src/multi-robot-simulation/src
+
+- start server with python ~/catkin_ws/src/multi-robot-simulation/server.py
+
+- download pthon websockt client with..
+
+- move gazebo models over to ~/daniel/.gazebo/models
+
+- launch with roslaunch multi-robot-simulation multi-robot-simulation.launch
+
+- open the index file 
 
 
 
