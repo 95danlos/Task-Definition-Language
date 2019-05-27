@@ -12,6 +12,20 @@ The Task Definition Language is a domain-specific language for the development o
 
 
 
+<br />
+
+## Setup on Real Robots
+
+
+
+
+
+<br />
+
+## Developer Setup
+
+
+
 
 commands
 
