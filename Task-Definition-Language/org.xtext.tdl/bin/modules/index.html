@@ -1,0 +1,281 @@
+<!--
+
+	@start Index Part 1
+
+-->
+
+<!DOCTYPE html>
+
+<html>
+	<head>
+
+		<title>Console</title>
+
+		<meta charset="utf-8" />
+
+		<style>
+			html{
+			    min-height:100%;/* make sure it is at least as tall as the viewport */
+			    position:relative;
+			}
+			body{
+			    height:100%; /* force the BODY element to match the height of the HTML element */
+			}
+			#mapid{
+			    position:absolute;
+			    top:0;
+			    bottom:0;
+			    left:0;
+			    right:0;
+			    overflow:hidden;
+			    z-index:0;
+			}
+			.error_message {
+			        position: absolute;
+			        text-align: center;
+			        top: 30%;
+			        left: 30%;
+			        width: 40%;
+			        font-size: 40px;
+			        color: red;
+			    }
+			.buttonBox {
+			        position:absolute;
+			        top:20px;
+			        right:20px;
+			        height: 300px;
+			        width: 150px;
+					z-index: 1001;
+					opacity: 0.8
+			    }
+			.button_task {
+			        height: 40px; 
+			        width: 100%; 
+			        font-size: 18px; 
+			    }
+			.info {
+				display: block;
+				position: absolute;
+				top: 0px;
+				left: 60px;
+				padding: 5px;
+				font-size: 14px;
+				text-align: center;
+				background: white;
+				z-index: 1001;
+				opacity: 0.5
+				}
+        </style>
+        
+		
+		<!-- include stylesheet for leaflet -->
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css"
+			integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+			crossorigin=""/>
+			
+		<!-- Make sure you put this AFTER Leaflet's CSS -->
+		<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"
+			integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA=="
+			crossorigin=""></script>
+		
+
+    </head>
+
+	<body height = 100% width = 100%>
+            <div id="error_message" class="error_message"></div>
+            <pre id='info' class="info">lat: "0.00000000"   lng: "0.00000000"</pre>
+
+		<div class="buttonBox">
+			<input id="start_button" class="button_task" type="button" value="Start Mission" onclick="start_mission();" />
+			</br>
+			</br>
+<!--
+
+	@end Index Part 1
+
+-->
+
+<!--
+
+	@start Index Part 2
+
+-->
+		
+		</div>
+		
+		
+		<div id="mapid"></div>
+
+		<script>
+
+			var mymap = L.map('mapid').setView([60.368130,5.354480], 18);
+			// this access token is the one used in the examples of the tutorial
+			// in theory one should get an own one, but it works for now and that's all I want for testing
+			mapLink = 
+				'<a href="http://www.esri.com/">Esri</a>';
+			wholink = 
+				'i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
+			L.tileLayer(
+				'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+				attribution: '&copy; '+mapLink+', '+wholink,
+				maxZoom: 18,
+				maxNativeZoom: 17,
+				}).addTo(mymap);
+				
+			
+			var map_markers = new Map();
+			var robot_markers = new Map();
+			var current_task_name = ""
+			var tasks = {
+		        "tasks": []
+		    }
+		    
+			var ws;
+			function init() {
+				// Connect to Web Socket
+				ws = new WebSocket("ws://localhost:9001/");
+				// Set event handlers.
+				ws.onopen = function() {
+					console.log("Server Online");
+					ws.send(JSON.stringify(["3", task_definitions]));
+				};
+                // Data from backend
+				ws.onmessage = function(e) {
+					var data = JSON.parse(e.data);
+					console.log(data)
+
+					// If flag = 2 sensor data from robots
+					if (data[0] === "2") {
+						update_robots_position(data)
+					}
+				}.bind(this);
+				ws.onclose = function() {
+					console.log("Server Closed");
+					alert("server disconnected - you may as well close this tab");
+				};
+				ws.onerror = function(e) {
+					console.log("Server Error");
+					console.log(e);
+					alert(e);
+				};
+			}
+			
+			function setTask(task_name) {
+				this.current_task_name = task_name
+			}
+			
+			mymap.on('click', e => {
+				if (this.current_task_name !== "") {
+					var new_marker = L.marker([0,0]);
+					new_marker.setLatLng(e.latlng);
+					new_marker.addTo(mymap);
+					map_markers.set(map_markers.size , [new_marker]);
+					this.tasks["tasks"].push(
+			        {
+			            "name": this.current_task_name,
+			            "lat": (e.latlng.lat - 60.368130) * 35000,
+            			"lng": (e.latlng.lng - 5.354480) * 17000 
+			        })
+			    }
+			});
+			
+			mymap.on('mousemove', function (e) {
+				document.getElementById('info').innerHTML = 
+				"lat: " + JSON.stringify(e.latlng.lat.toFixed(8)) + "   " +
+				"lng: " + JSON.stringify(e.latlng.lng.toFixed(8));
+				});
+				
+			function start_mission() {
+				new_tasks = {
+		        "composite_tasks": []
+		    	}
+				this.tasks.tasks.forEach( new_task => {
+					new_composite_task = {
+                      "tasks": []
+					}
+					task_definitions.composite_tasks.forEach( composite_task_definition => {
+						if (composite_task_definition.composite_task_name == new_task.name) {
+								composite_task_definition.tasks.forEach( task => {
+									new_composite_task["tasks"].push(
+									{
+										"task_name": task.task_name,
+										"robot_id": "0",
+										"task_status": "not_started",
+										"actions": task.actions,
+										"bids": [],
+										"ignore_robots": []
+									})
+								})
+								
+								new_composite_task["name"] = new_task.name
+								new_composite_task["is_sold"] = "False"
+								new_composite_task["lat"] = new_task.lat
+								new_composite_task["lng"] = new_task.lng
+								new_tasks.composite_tasks.push(new_composite_task)
+						}
+						
+					})
+
+				})
+
+				ws.send(JSON.stringify(["1", new_tasks]));
+				this.tasks = {
+		        "tasks": []
+		    	}
+			}
+			
+			function update_robots_position(data) {
+				robots_sensor_data = data[1];
+				robots_sensor_data.robots.forEach(robot => {
+					lat = null
+					lng = null
+					robot.topics.forEach(topic => {
+						if (topic.topic_name == "lat") {
+							lat = topic.topic_value / 35000 + 60.368130
+						}
+						else if (topic.topic_name == "lng") {
+							lng = topic.topic_value / 17000 + 5.354480
+						}
+						else {
+							console.log("other sensor data recieved");
+						}
+					});
+					if (lat !== null && lng !== null) {
+						var id = robot.robot_id;
+						var position = [parseFloat(lat), parseFloat(lng)];
+						// If new robot add new marker
+						if (!robot_markers.has(id)) {
+							var new_robot_marker = L.circle(position,{color: "red", radius: 2}).bindTooltip(id).addTo(mymap);
+							robot_markers.set(id, [new_robot_marker]);
+						// else update marker
+						} else {
+							var marker = robot_markers.get(id);
+							marker[0].setLatLng(position);
+						}
+					}
+				});
+			}
+
+			async function display_error_message(message) {
+				document.getElementById('error_message').innerHTML = message;
+				await sleep(3)
+				document.getElementById('error_message').innerHTML = "";
+			}
+
+			function sleep(s) {
+				return new Promise(resolve => setTimeout(resolve, s*1000));
+			}
+
+			init();
+			
+		</script>
+				
+	</body>
+
+</html>
+
+<!--
+
+	@end Index Part 2
+
+-->

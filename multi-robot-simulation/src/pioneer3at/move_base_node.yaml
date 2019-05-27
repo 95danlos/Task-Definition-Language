@@ -41,5 +41,5 @@ TrajectoryPlannerROS:
  acc_lim_x: 2.5
  acc_lim_y: 2.5
  yaw_goal_tolerance: 10
- xy_goal_tolerance: 3
+ xy_goal_tolerance: 2
  escape_vel: -2

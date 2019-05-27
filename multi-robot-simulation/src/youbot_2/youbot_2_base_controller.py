@@ -14,7 +14,7 @@ def callback(data):
 	state = ModelState()
 	state.model_name = "youbot_2"
 	state.twist = twist
-	state.reference_frame = "youbot_2" 
+	state.reference_frame = "youbot_2"  
 	ret = set_state(state)
 rospy.init_node('base_controller', anonymous=True)
 set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)

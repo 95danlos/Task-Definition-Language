@@ -1,13 +1,13 @@
 #!/usr/bin/python
 import rospy
 import tf
+import time
 from std_msgs.msg import String
 from tf2_msgs.msg import TFMessage
 from math import sin, cos, pi
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3, TransformStamped
-from time import sleep as _sleep
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Twist
 from gazebo_msgs.srv import GetModelState

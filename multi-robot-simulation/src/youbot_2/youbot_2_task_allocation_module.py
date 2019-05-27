@@ -2,32 +2,24 @@
 import rospy
 import tf
 import math
+import time
+import actionlib
 from std_msgs.msg import String
 from tf2_msgs.msg import TFMessage
 from math import sin, cos, pi
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3, TransformStamped
-from time import sleep as _sleep
-from geometry_msgs.msg import Pose
-from geometry_msgs.msg import Twist
-from gazebo_msgs.srv import GetModelState
-from gazebo_msgs.srv import SetModelState
+from gazebo_msgs.srv import GetModelState, SetModelState
 from gazebo_msgs.msg import ModelState
-from time import sleep as _sleep
-from geometry_msgs.msg import *
-from geometry_msgs.msg import *
-from gazebo_msgs.srv import *
-from gazebo_msgs.msg import *
 rospy.init_node('youbot_2', anonymous=True)
-set_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
+set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
 twist = Twist()
 state = ModelState()
 state.model_name = "youbot_2"
 state.reference_frame = "youbot_2"
 def goTo(lat,lng):
-		import actionlib
-		from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 		client = actionlib.SimpleActionClient('youbot_2/move_base', MoveBaseAction)  
 		client.wait_for_server()
 		goal = MoveBaseGoal()
@@ -41,7 +33,7 @@ def goTo(lat,lng):
 		while (not rospy.is_shutdown() and status != "Goal reached."):
 		  status = client.get_goal_status_text()
 		  r.sleep()
-def moveToGoal():
+def jumpToGoal():
 		get_state = rospy.ServiceProxy("/gazebo/get_model_state", GetModelState)
 		set_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
 		pose = Pose()
@@ -71,9 +63,9 @@ def moveToGoal():
 		pose.orientation.w = quaternion[3]
 		state.pose = pose
 		ret = set_state(state)
-def moveToBall():
+def jumpToBall():
 		get_state = rospy.ServiceProxy("/gazebo/get_model_state", GetModelState)
-		set_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
+		set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
 		pose = Pose()
 		state = ModelState()
 		state.model_name = "youbot_2"
@@ -105,61 +97,57 @@ def kickBall():
 		state = ModelState()
 		state.model_name = "youbot_2"
 		state.reference_frame = "youbot_2"
-		set_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
+		set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
 		pose = Pose()
 		twist = Twist()
-		_sleep(2)
+		time.sleep(2)
 		twist.linear.x = -3
 		twist.linear.y = 0
 		twist.angular.z = 0
 		state.twist = twist
 		ret = set_state(state)
-		_sleep(1)
+		time.sleep(1)
 		twist.linear.x = 0
 		twist.linear.y = 0
 		twist.angular.z = 0
 		state.twist = twist
 		ret = set_state(state)
-def faceBall():
-		_sleep(1)
-def aim():
-		_sleep(1)
-def moveForward():
+def moveForward(_time):
 		twist.linear.x = 2
 		twist.angular.z = 0
 		state.twist = twist
 		ret = set_state(state)
-		_sleep(2)
+		time.sleep(float(_time) * 0.001)
 		twist.linear.x = 0
 		twist.angular.z = 0
 		state.twist = twist
 		ret = set_state(state)
-def moveBackwards():
+def moveBackwards(_time):
 		twist.linear.x = -2
 		twist.angular.z = 0
 		state.twist = twist
 		ret = set_state(state)
-		_sleep(2)
+		time.sleep(float(_time) * 0.001)
 		twist.linear.x = 0
 		twist.angular.z = 0
 		state.twist = twist
 		ret = set_state(state)
-def turnLeft():
+def turnLeft(_degrees):
 		twist.linear.x = 0
 		twist.angular.z = 4
 		state.twist = twist
 		ret = set_state(state)
-		_sleep(20)
+		time.sleep(float(_degrees) * 0.02)
 		twist.linear.x = 0
 		twist.angular.z = 0
 		state.twist = twist
 		ret = set_state(state)
-def turnRight():
+def turnRight(_degrees):
 		twist.linear.x = 0
 		twist.angular.z = -4
 		state.twist = twist
 		ret = set_state(state)
-		_sleep(20)
+		time.sleep(float(_degrees) * 0.02)
 		twist.linear.x = 0
 		twist.angular.z = 0
 		state.twist = twist
@@ -167,18 +155,32 @@ def turnRight():
 """
     @start Task Allocation Module Part 1
 """
+SERVER_IP_ADDRESS = "localhost"
+def get_ros_master_ip_address_from_server():
+    server_response = None
+    ws = None
+    while server_response == None:
+        try:
+            import json
+            import sys, ast, math
+            from websocket import create_connection
+            ws = create_connection("ws://" + SERVER_IP_ADDRESS + ":9001/")
+            ws.send(json.dumps(["0", robot_status_table.get("robot_id"), robot_status_table.get("robot_ip_address")]))
+            server_response = ast.literal_eval(ws.recv())
+        except:
+          print('\033[94m' + robot_status_table.get("robot_id") + ": Trying to Connect to Server" + '\033[0m')
+          time.sleep(2)
+        finally:
+          if ws != None:
+              ws.close()
+    return server_response
 from std_msgs.msg import String
 import threading
 import rospy
 import json
 import time
 import math
-def runtime_engine_slave():
-    #subprocess.Popen("export ROS_IP=10.0.0.19", shell=True).wait()
-    #subprocess.Popen("export ROS_HOSTNAME=10.0.0.19", shell=True).wait()
-    #subprocess.Popen("export ROS_MASTER_URI=http://10.0.0.10:11311", shell=True).wait()
-    # anonymous = True allows multiple nodes with same name
-    #rospy.init_node('Slave', anonymous=True)
+def start_bidder():
     bid_table_topic = rospy.Publisher('bid_table', String, queue_size=10)
     task_status_topic = rospy.Publisher('task_status', String, queue_size=10)
     global robot_status_table_topic
@@ -203,17 +205,16 @@ def callback(mission_table_string, args):
     if task_status:
     	task_status_topic.publish(json.dumps(task_status))
 """
-    Search for new biddable tasks, 
-    @Algorithm for calculating bid value
+    Search for new biddable tasks
 """
 def find_new_biddable_tasks(mission_table):
     bid_table = {
         "tasks": []
     }
     for composite_task in mission_table["composite_tasks"]:
-        for task in composite_task["tasks"]:
-            # If task is biddable
-            if task.get("auction_status") == "open":
+        # If task is not sold yet
+        if composite_task.get("is_sold") == "False":
+            for task in composite_task["tasks"]:
                 # If task is doable by this robot send bid
                 if check_if_task_is_doable(task.get("task_id"), mission_table):
                     bid_table["tasks"].append({
@@ -258,15 +259,14 @@ def start_executing_task():
         # If action has no max time limit
         if max_time == None:
             max_time = 999999
-        # Check if action should wait for another robots action to finish before starting
-        if(action.get("after_action")!= None):
-          while (not check_action_dependency(action)):
-            time.sleep(0.1)
+        # Check if action should wait for another robots action to finish before starting, sync or atfer
+        while (not action_is_ready_to_start(action)):
+          time.sleep(0.1)
         # Start action
         if(action.get("positioning_action")=="True"):
           t = threading.Thread(target=globals()[action.get("action_name")](task_status.get("lat"), task_status.get("lng")))
         else:
-          t = threading.Thread(target=globals()[action.get("action_name")]())
+          t = threading.Thread(target=globals()[action.get("action_name")](*action.get("arguments")))
         t.start()
         i = 0
         while (i < max_time):
@@ -313,14 +313,17 @@ def get_task_by_id(task_id, mission_table):
         for task in composite_task["tasks"]:
             if task.get("task_id") == task_id:
                 return task
+"""
+    @Bid_Function for calculating bid based on the distance to the task
+"""
 def calculate_bid(composite_task):
     from math import sin, cos, sqrt, atan2, radians
-    my_lat = ""
-    my_lng = ""
+    my_lat = 0.0
+    my_lng = 0.0
     for topic in my_sensor_data["topics"]:
-        if topic.get("topic_name") == "lat":
+        if topic.get("topic_name") == "lat" and topic.get("topic_value") != "0":
             my_lat = topic.get("topic_value")
-        if topic.get("topic_name") == "lng":
+        if topic.get("topic_name") == "lng" and topic.get("topic_value") != "0":
             my_lng = topic.get("topic_value")
     # Approximate radius of earth in km
     R = 6373.0
@@ -334,19 +337,28 @@ def calculate_bid(composite_task):
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
     # Distance in meters --> If not using simulator 
     d = R * c * 1000
-    print(robot_status_table.get("robot_id"), ", Distance: ", d)
     return -d
-def check_action_dependency(action):
-    print("checking")
-    if(action.get("after_action")!= None):
+def action_is_ready_to_start(action):
+    ready = True
+    if action.get("after_action")!= None:
       for composite_task in mission_table_g["composite_tasks"]:
         if composite_task.get("composite_task_id") == task_status.get("composite_task_id"):
           for task in composite_task["tasks"]:
             for action_2 in task["actions"]:
               if action_2.get("action_id") != None and action_2.get("action_id") == action.get("after_action"):
-                if action_2.get("action_status") == "completed":
-                  return True
-    return False
+                if action_2.get("action_status") != "completed":
+                  ready = False
+    if action.get("sync_number")!= None:
+      for composite_task in mission_table_g["composite_tasks"]:
+        if composite_task.get("composite_task_id") == task_status.get("composite_task_id"):
+          for task in composite_task["tasks"]:
+            action_2_prev = None
+            for action_2 in task["actions"]:
+              if action_2.get("sync_number") != None and action_2.get("sync_number") == action.get("sync_number"):
+                if action_2_prev != None and action_2_prev.get("action_status") != "completed":
+                  ready = False
+              action_2_prev = action_2
+    return ready
 """
     @end Task Allocation Module Part 2
 """
@@ -382,23 +394,15 @@ my_actions_table = {
           "action_status" : "not_doing"
         },
         {
-          "action_name" : "moveToGoal",
+          "action_name" : "jumpToGoal",
           "action_status" : "not_doing"
         },
         {
-          "action_name" : "moveToBall",
+          "action_name" : "jumpToBall",
           "action_status" : "not_doing"
         },
         {
           "action_name" : "kickBall",
-          "action_status" : "not_doing"
-        },
-        {
-          "action_name" : "faceBall",
-          "action_status" : "not_doing"
-        },
-        {
-          "action_name" : "aim",
           "action_status" : "not_doing"
         },
         {
@@ -429,9 +433,228 @@ robot_sensor_data_topic = rospy.Publisher('sensor_data', String, queue_size=10)
 """
     @start Task Allocation Module Part 3
 """
-task_status = {}
-if __name__ == '__main__':
-    runtime_engine_slave()
+from std_msgs.msg import String
+import subprocess
+import threading
+import rospy
+import time
+import json
+def start_auctioneer():
+    def start(ws):
+        mission_table_topic = rospy.Publisher('mission_table', String, queue_size=10)
+        # Tables sent to master
+        rospy.Subscriber("bid_table", String, callback)
+        rospy.Subscriber("task_status", String, callback_2)
+        rospy.Subscriber("robot_status_table", String, callback_3)
+        rospy.Subscriber("sensor_data", String, callback_4)
+        # Start distributing tasks 
+        rate = rospy.Rate(2)
+        while not rospy.is_shutdown():
+            mission_table_topic.publish(json.dumps(mission_table))
+            rate.sleep()
+            distribute_tasks(mission_table)
+            ws.send(json.dumps(["2", robot_sensor_data_master]))
+    def callback(bid_table_json):
+        bid_table = json.loads(bid_table_json.data)
+        merge_bids(bid_table)
+    def callback_2(task_status_json):
+        task_status = json.loads(task_status_json.data)
+        update_task_status(task_status)
+    def callback_3(robot_status_table_json):
+        robot_status_table = json.loads(robot_status_table_json.data)
+        update_robot_status(robot_status_table)
+    def callback_4(sensor_data_json):
+        sensor_data = json.loads(sensor_data_json.data)
+        update_sensor_data(sensor_data)
+    def update_sensor_data(sensor_data):
+        found = False
+        for robot in robot_sensor_data_master["robots"]:
+          if robot.get("robot_id") == sensor_data.get("robot_id"):
+            robot["topics"] = sensor_data["topics"]
+            found = True
+        if not found:
+          robot_sensor_data_master["robots"].append(sensor_data)
+    def update_task_status(task_status):
+        for composite_task in mission_table["composite_tasks"]:
+            for task in composite_task["tasks"]:
+              if task.get("task_id") == task_status.get("task_id"):
+                task["actions"] = task_status["actions"]
+                task["task_status"] = task_status["task_status"]
+                # check if task has failed
+                if (task_status["task_status"] == "Failed"):
+                  for robot in robot_status_table_master["robots"]:
+                    if robot.get("robot_id") == task_status.get("robot_id"):
+                      robot["recovering"] == "1"
+                  print("Master: Task Failed")
+    def update_robot_status(robot_status_table):
+      found = False
+      for robot in robot_status_table_master["robots"]:
+        if robot.get("robot_id") == robot_status_table.get("robot_id"):
+          robot = robot_status_table
+          found = True
+          robot["recovering"] = "0"
+          robot["recovered_from_task_with_id"] = "0"
+      if not found:
+        robot_status_table_master["robots"].append(robot_status_table)
+    """
+        Merge new bids into mission table
+    """
+    def merge_bids(bid_table_from_robot):
+      # Find each task the robot has bidded on
+      for task_to_bid_on in bid_table_from_robot["tasks"]:
+          # Find task in mission table
+          for composite_task in mission_table["composite_tasks"]:
+            for task in composite_task["tasks"]:
+              if task_to_bid_on.get("task_id") == task.get("task_id"):
+                # Check if bid from this robot allready exists
+                bid_allredy_exists = False
+                for bid in task["bids"]:
+                  # If bid allready exists override old bid
+                  if bid.get("robot_id") == task_to_bid_on.get("robot_id"):
+                    bid["bid_value"] = task_to_bid_on.get("bid_value")
+                    bid_allredy_exists = True
+                # If not add new bid
+                if not bid_allredy_exists:
+                  task["bids"].append({
+                        "robot_id" : task_to_bid_on.get("robot_id"),
+                        "bid_value" : task_to_bid_on.get("bid_value")
+                        })
+    """
+        Distribute tasks
+    """
+    def distribute_tasks(mission_table_): 
+        more_doable_tasks = True
+        # While there are more doable composite tasks
+        while more_doable_tasks:
+          best_composite_task = None
+          best_composite_task_value = 0
+          # For each composite task
+          for composite_task in mission_table_["composite_tasks"]:
+              # If composite task is not sold
+              if composite_task.get("is_sold") == "False":
+                composite_task_is_doable = True
+                composite_task_value = 0
+                # For each sub task
+                for sub_task in composite_task["tasks"]:
+                    highest_bidder = None
+                    highest_bid = None
+                    # For each bid
+                    for bid in sub_task["bids"]:
+                      # If bid is higher then the highest bid so far and the robot is available
+                      if bid.get("bid_value") > highest_bid and robot_is_available(bid.get("robot_id")):
+                        highest_bidder = bid.get("robot_id")
+                        highest_bid = bid.get("bid_value")
+                    # check that there where atleast one bid
+                    if highest_bidder is not None:
+                      # Temporarily allocate the task to make the robot unavailable for other sub tasks
+                      sub_task["robot_id"] = highest_bidder
+                      composite_task_value += highest_bid
+                    else:
+                      composite_task_is_doable = False
+                if composite_task_is_doable and (composite_task_value > best_composite_task_value or best_composite_task == None):
+                  best_composite_task = composite_task
+                  best_composite_task_value = composite_task_value
+                for sub_task in composite_task["tasks"]:
+                  sub_task["robot_id"] = "0"
+          if best_composite_task != None:
+            best_composite_task["is_sold"] = "True"
+            print('\033[94m' + "New Task Started: " + best_composite_task.get("name") + '\033[0m')
+            print('\033[94m' + "Robots: " + '\033[0m')
+            for sub_task in best_composite_task["tasks"]:
+              highest_bidder = None
+              highest_bid = None
+              # For each bid
+              for bid in sub_task["bids"]:
+                # If bid is higher then highest bid so far and robot is available
+                if bid.get("bid_value") > highest_bid and robot_is_available(bid.get("robot_id")):
+                  highest_bidder = bid.get("robot_id")
+                  highest_bid = bid.get("bid_value")
+              sub_task["robot_id"] = highest_bidder
+              print('\033[94m' + "  " + highest_bidder + '\033[0m')
+          else:
+            more_doable_tasks = False
+    def robot_is_available(robot_id):
+        for composite_task in mission_table["composite_tasks"]:
+            for task in composite_task["tasks"]:
+                # Check if task is given to the robot and not completed yet
+                if task.get("robot_id") == robot_id and task.get("task_status") != "completed":
+                  return False
+        return True
+    def get_task_by_id(task_id):
+        for composite_task in mission_table["composite_tasks"]:
+            for task in composite_task["tasks"]:
+                if task.get("task_id") == task_id:
+                    return task
+    mission_table = {
+            "composite_tasks": []
+        }
+    robot_status_table_master = {
+            "robots": [
+            ]
+        }
+    robot_sensor_data_master = {
+            "robots": [
+            ]
+        }
+    def setup_connection_to_server():
+        ws = None
+        while ws == None:
+            try:
+                import json
+                import sys, ast, math
+                from websocket import create_connection
+                ws = create_connection("ws://" + SERVER_IP_ADDRESS + ":9001/")
+            except:
+              print('\033[94m' + robot_status_table.get("robot_id") + ": Trying to Connect to Server" + '\033[0m')
+              time.sleep(2)
+        t = threading.Thread(target=start_listening_on_server, args=(ws,))
+        t.daemon = True
+        t.start()
+        ws.send(json.dumps(["4"]))
+        start(ws)
+    def start_listening_on_server(ws):
+            import json
+            import sys, ast, math
+            from websocket import create_connection
+            while True:
+                message =  ast.literal_eval(ws.recv())
+                # If flag == 1 new tasks recieved from client
+                if (message[0] == "1"):
+                    for new_composite_task in message[1]["composite_tasks"]:
+                        i = 1
+                        new_composite_task_id = len(mission_table["composite_tasks"]) + 1
+                        for task in new_composite_task["tasks"]:
+                            task["task_id"] = (str(new_composite_task_id) + "." + str(i))
+                            i = i + 1
+                        new_composite_task["composite_task_id"] = str(new_composite_task_id)
+                        mission_table["composite_tasks"].append(new_composite_task)
+    setup_connection_to_server()
 """
     @end Task Allocation Module Part 3
+"""
+"""
+    @start Task Allocation Module Part 4
+"""
+task_status = {}
+if __name__ == '__main__':
+    import socket    
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    robot_status_table["robot_ip_address"] = s.getsockname()[0]
+    s.close() 
+    message = get_ros_master_ip_address_from_server()
+    # If leader id == this robots id
+    if message[0] == robot_status_table.get("robot_id"):
+      print('\033[94m' + robot_status_table.get("robot_id") + ": Starting Master" + '\033[0m')
+      # start auctioneer
+      t = threading.Thread(target=start_auctioneer)
+      t.daemon = True
+      t.start()
+      robot_status_table["master"] = "True"
+    else:
+      print('\033[94m' + robot_status_table.get("robot_id") + ": Connecting to Master" + '\033[0m')
+      subprocess.Popen("export ROS_MASTER_URI=http://" + message[0] + ":11311", shell=True).wait()
+    start_bidder()
+"""
+    @end Task Allocation Module Part 4
 """

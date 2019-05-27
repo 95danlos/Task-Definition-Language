@@ -1,13 +1,13 @@
 #!/usr/bin/python
 import rospy
 import tf
+import time
 from std_msgs.msg import String
 from tf2_msgs.msg import TFMessage
 from math import sin, cos, pi
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3, TransformStamped
-from time import sleep as _sleep
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Twist
 from gazebo_msgs.srv import GetModelState
@@ -45,10 +45,11 @@ while (not rospy.is_shutdown()):
 	odom = Odometry()
 	odom.header.stamp = current_time
 	odom.header.frame_id = "odom"
+	#odom.pose.pose = Pose(Point(x, y, 0.), Quaternion(*odom_quat))
 	odom.pose.pose = response.pose
 	odom.child_frame_id = "base_link"
 	odom.twist.twist = response.twist
 	odom_pub.publish(odom)
 	lat_pub.publish(str(response.pose.position.y))
-	lng_pub.publish(str(response.pose.position.x))  
+	lng_pub.publish(str(response.pose.position.x))                    
 	r.sleep()
