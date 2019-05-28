@@ -6,42 +6,62 @@ The Task Definition Language is a domain-specific language for the development o
 
 <br />
 
-## Simulation Setup
+## Eclipse Setup
 
-Setup on simulation requires linux and ROS. Follow the ROS setup tutorial at
+Setup on simulation requires linux and ROS. Follow the ROS setup tutorial at http://wiki.ros.org/ROS/Installation
 
 Then install the Gazebo simulator by following the steps at http://gazebosim.org/tutorials?tut=ros_installing
 
-
+Clone this project 
 
 ```
-sudo apt-get install ros-"your ros distro"-"Gazebo"
+git clone https://github.com/95danlos/Task-Definition-Language.git
 ```
 
+In the eclipse menu bar click help --> Eclipse Marketplace --> search xtext --> install Eclipse Xtext and Eclipse Xtend
 
-- pull project
-
-- in the eclipse menu bar click help --> install new software --> add --> local --> select plugin folder, if the plugin is not listed uncheck "Group item by category"
-
+In the eclipse menu bar click help --> install new software --> add --> local --> select the plugin folder in the cloned project, if the plugin is not listed uncheck "Group item by category" --> install the plugin and restart eclipse
 
 
-- create catkin ws
-- create a new catkin project called multi-robot-simulation
 
-- copy files from the gihub folder called multi-robot-simulation over to the new created project
+New project General --> Project
 
-- make files executable with chmod +x -R ~/catkin_ws/src/multi-robot-simulation/src
+New folder call it Scr
 
-- start server with python ~/catkin_ws/src/multi-robot-simulation/server.py
+New file with .tdl extension --> click yes on convert to Xtext Project
 
-- download pthon websockt client with..
+* create a new file for each robot
+
+* Create a new file and add Tasks
+
+* Example files in multi-robot-simulation/robots
+
+
+<br />
+
+## Simulation Setup
+
+- create a catkin ws http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment
+
+- create a new ROS package called multi-robot-simulation
+http://wiki.ros.org/ROS/Tutorials/CreatingPackage
+
+- build the package
+http://wiki.ros.org/ROS/Tutorials/BuildingPackages
+
+- copy the files form the folder called multi-robot-simulationfrom in the cloned project over to the new created package
+
+- make the src files executable with chmod +x -R ~/catkin_ws/src/multi-robot-simulation/src
+
+- download python websockt client with..
+
+- start the server with python ~/catkin_ws/src/multi-robot-simulation/server.py
 
 - move gazebo models over to ~/daniel/.gazebo/models
 
 - launch with roslaunch multi-robot-simulation multi-robot-simulation.launch
 
-- open the index file 
-
+- open the index file in ~/catkin_ws/src/multi-robot-simulation
 
 
 
