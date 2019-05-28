@@ -89,9 +89,21 @@ Open the index file in ~/catkin_ws/src/multi-robot-simulation
 ![alt text](https://github.com/95danlos/Task-Definition-Language/blob/master/images/simulation_demo_img_2.png)
 
 
+<br />
+
 ## Setup on Real Robots
 
+To setup on real robots follow the same steps as in the simulator setup above besides the gazebo steps. This must be done on all of the robots. 
 
+Setup on real robots requires all of the robots to have ROS installed. Follow the ROS setup tutorial at http://wiki.ros.org/ROS/Installation
+
+Create a catkin workspace: http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment
+
+Create a new ROS package called multi-robot-simulation: http://wiki.ros.org/ROS/Tutorials/CreatingPackage
+
+Build the package: http://wiki.ros.org/ROS/Tutorials/BuildingPackages
+
+Move the src-gen folders for each robot to ~/catkin_ws/src/multi-robot-simulation/src on the appropriate robot
 
 
 
