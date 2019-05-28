@@ -112,6 +112,7 @@ Move the src-gen folders for each robot to ~/catkin_ws/src/multi-robot-simulatio
 ## Developer Setup
 
 
+File --> import --> Existing Projects into Workspace --> Browse --> And select the Task-Definiton-Language-Project folder
 
 
 
