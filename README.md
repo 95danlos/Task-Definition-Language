@@ -105,7 +105,7 @@ Build the package: http://wiki.ros.org/ROS/Tutorials/BuildingPackages
 
 
 
-Change the SERVER_IP_ADDRESS variable in each generated setup file on line 1 and task allocation module file on line 158
+Change the SERVER_IP_ADDRESS variable in each generated setup file and task allocation module file
 
 Move the src-gen folders for each robot to ~/catkin_ws/src/multi-robot-simulation/src on the appropriate robot
 
