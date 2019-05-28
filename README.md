@@ -15,9 +15,11 @@ git clone https://github.com/95danlos/Task-Definition-Language.git
 ```
 
 Install Xtext and Xtend:
+
 In the eclipse menu bar click help --> Eclipse Marketplace --> search for xtext --> install Eclipse Xtext and Eclipse Xtend
 
 Add the Task-Definition-Language Plugin:
+
 In the eclipse menu bar click help --> install new software --> add --> local --> select the plugin folder in the cloned project, if the plugin is not listed uncheck "Group item by category" --> install the plugin and restart eclipse
 
 
@@ -96,18 +98,6 @@ Open the index file in ~/catkin_ws/src/multi-robot-simulation
 <br />
 
 ## Developer Setup
-
-
-
-
-commands
-
-roslaunch multi-robot-simulation multi-robot-simulation.launch
-
-chmod +x -R /home/daniel/catkin_ws/src/multi-robot-simulation/src
-
-
-
 
 
 
