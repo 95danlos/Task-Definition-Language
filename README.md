@@ -3,6 +3,7 @@
 ## Description
 The Task Definition Language is a domain-specific language for the development of heterogeneous multi-robot systems. It allows you to add your robots to the framework and then create a mission for a team of robots through a web interface. It is built on top of the robot operating system and is using an auction-based task allocation algorithm to distribute tasks amongst the robots.
 
+Setup on simulator requires Linux with ROS installed. Setup on real robots requires Linux with ROS installed on each robot and each robot must have a gps.
 
 <br />
 
@@ -16,45 +17,45 @@ git clone https://github.com/95danlos/Task-Definition-Language.git
 
 Install Xtext and Xtend:
 
-In the eclipse menu bar click help --> Eclipse Marketplace --> search for xtext --> install Eclipse Xtext and Eclipse Xtend
+In the Eclipse menu bar click --> help --> Eclipse Marketplace and search for Xtext and Xtend.
 
 Add the Task-Definition-Language Plugin:
 
-In the eclipse menu bar click help --> install new software --> add --> local --> select the plugin folder in the cloned project, if the plugin is not listed uncheck "Group item by category" --> install the plugin and restart eclipse
+In the Eclipse menu bar click --> help --> install new software --> add --> local --> select the plugin folder in the cloned project, if the plugin is not listed uncheck "Group item by category" --> install the plugin and restart Eclipse.
 
 
-Create a new Eclipse project:
+Create a new project:
 
-In Eclipse click new project --> General --> Project
+In Eclipse click --> new project --> general --> project.
 
-Create New folder call it Scr
+Create a new folder call it scr, here you can add a file for each robot and one file defining the tasks.
 
-Create a new file with the extension .tdl --> click yes when asked to convert to Xtext Project
+To add a new robot create a new file under src with the extension .tdl. Click yes when asked to convert to Xtext project.
 
-* create a new file for each robot
+A robot file should contain an implementation of each simple action that the robot is able to perform, and can also contain implementation of ROS nodes and parameters. See the ROS tutorials for information on how to write ROS nodes http://wiki.ros.org/ROS/Tutorials. 
 
-* Create a new file and add Tasks
+Create a new file and define each task that the robots should perform.
 
-* Example files in multi-robot-simulation/robots
+Example files for task definitions and simulated robots can be found under multi-robot-simulation/robots.
 
 
 <br />
 
-## Simulation Setup
+## Simulator Setup
 
-Setup on simulation requires linux and ROS. Follow the ROS setup tutorial at http://wiki.ros.org/ROS/Installation
+Setup on simulator requires ROS. Follow the ROS setup tutorial at http://wiki.ros.org/ROS/Installation.
 
-Then install the Gazebo simulator by following the steps at http://gazebosim.org/tutorials?tut=ros_installing
+Install the Gazebo simulator by following the steps at http://gazebosim.org/tutorials?tut=ros_installing.
 
-Move the gazebo models from Task-Definition-Language\multi-robot-simulation\gazebo-models over to ~/.gazebo/models
+Move the gazebo models from Task-Definition-Language\multi-robot-simulation\gazebo-models over to ~/.gazebo/models.
 
-Create a catkin workspace: http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment
+Create a catkin workspace by following the steps at http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment.
 
-Create a new ROS package called multi-robot-simulation: http://wiki.ros.org/ROS/Tutorials/CreatingPackage
+Create a new ROS package called multi-robot-simulation by following the steps at http://wiki.ros.org/ROS/Tutorials/CreatingPackage.
 
-Build the package: http://wiki.ros.org/ROS/Tutorials/BuildingPackages
+Build the package by following the steps at http://wiki.ros.org/ROS/Tutorials/BuildingPackages.
 
-Copy the files form the folder called multi-robot-simulationfrom in the cloned project over to the new created package
+Copy the files form the folder called multi-robot-simulation from in the cloned project over to the new created package.
 
 Make the src files executable:
 
@@ -74,15 +75,13 @@ Start the server:
 python ~/catkin_ws/src/multi-robot-simulation/server.py
 ```
 
-
 Launch the simulation:
 
 ```
 roslaunch multi-robot-simulation multi-robot-simulation.launch
 ```
 
-Open the index file in ~/catkin_ws/src/multi-robot-simulation
-
+Open the index file in ~/catkin_ws/src/multi-robot-simulation.
 
 <br /> 
 
@@ -93,23 +92,21 @@ Open the index file in ~/catkin_ws/src/multi-robot-simulation
 
 ## Setup on Real Robots
 
-To setup on real robots follow the same steps as in the simulator setup above besides the gazebo steps. This must be done on all of the robots. 
+Setup on real robots requires all of the robots to have ROS installed. Follow the ROS setup tutorial at http://wiki.ros.org/ROS/Installation.
 
-Setup on real robots requires all of the robots to have ROS installed. Follow the ROS setup tutorial at http://wiki.ros.org/ROS/Installation
+Create a catkin workspace: http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment.
 
-Create a catkin workspace: http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment
+Create a new ROS package called multi-robot-simulation: http://wiki.ros.org/ROS/Tutorials/CreatingPackage.
 
-Create a new ROS package called multi-robot-simulation: http://wiki.ros.org/ROS/Tutorials/CreatingPackage
+Build the package: http://wiki.ros.org/ROS/Tutorials/BuildingPackages.
 
-Build the package: http://wiki.ros.org/ROS/Tutorials/BuildingPackages
+Add a .tld file for each robot and one for the tasks as described under the Eclipse Setup section above.
 
-
-
-Change the SERVER_IP_ADDRESS variable in each generated setup file and task allocation module file
+Change the SERVER_IP_ADDRESS variable in each generated setup file and in each generated task allocation module file under src-gen to the ip address of the machine that is going to run the server.
 
 Move the src-gen folders for each robot to ~/catkin_ws/src/multi-robot-simulation/src on the appropriate robot
 
-Run the startup file
+Run the startup files on each robot, then start the server and open the index file.
 
 
 <br />
