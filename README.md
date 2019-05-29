@@ -104,7 +104,7 @@ Add a .tld file for each robot and one for the tasks as described under the Ecli
 
 Change the SERVER_IP_ADDRESS variable in each generated setup file and in each generated task allocation module file under src-gen to the ip address of the machine that is going to run the server.
 
-Move the src-gen folders for each robot to ~/catkin_ws/src/multi-robot-simulation/src on the appropriate robot
+Move the src-gen folders for each robot to ~/catkin_ws/src/multi-robot-simulation/src on the appropriate robot.
 
 Run the startup files on each robot, then start the server and open the index file.
 
@@ -113,8 +113,29 @@ Run the startup files on each robot, then start the server and open the index fi
 
 ## Developer Setup
 
+Import to Eclipse:
 
-File --> import --> Existing Projects into Workspace --> Browse --> And select the Task-Definiton-Language-Project folder
+In Eclipse click --> File --> Import --> Existing Projects into Workspace --> Browse --> select the Task-Definiton-Language-Project folder.
+
+Install Xtext and Xtend:
+
+In the Eclipse menu bar click --> help --> Eclipse Marketplace and search for Xtext and Xtend.
+
+The project org.xtext.tdl contains six files used for development found under src:
+ 
+Tdl.xtext contains the grammar for the task definition language written in Xtext.
+
+TdlGenerator.xtend contains the generator which is used to take intormation from the robot and task files to create the index file and the task allocation module, launch file, startup file, and additional ROS files for each robot.
+
+HelperMethods.java contains methods used by the generator to format generated files.
+
+index.html contains the web interface and task definitions.
+
+server.py connects the web interface with the robots and the robots with each other.
+
+task_allocation_module.py is used to distribute tasks amongst the robots and execute actions.
+
+
 
 
 
