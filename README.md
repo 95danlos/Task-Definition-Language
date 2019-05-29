@@ -55,7 +55,7 @@ Create a new ROS package called multi-robot-simulation by following the steps at
 
 Build the package by following the steps at http://wiki.ros.org/ROS/Tutorials/BuildingPackages.
 
-Copy the files form the folder called multi-robot-simulation from in the cloned project over to the new created package.
+Copy the files from the folder called multi-robot-simulation from in the cloned project over to the new created package.
 
 Make the src files executable:
 
@@ -115,7 +115,7 @@ Run the startup files on each robot, then start the server and open the index fi
 
 #### Import to Eclipse:
 
-In Eclipse click --> File --> Import --> Existing Projects into Workspace --> Browse --> select the Task-Definiton-Language-Project folder.
+In Eclipse click --> File --> Import --> Existing Projects into Workspace --> Browse --> select the Task-Definition-Language-Project folder.
 
 
 #### Install Xtext and Xtend:
@@ -127,7 +127,7 @@ In the Eclipse menu bar click --> help --> Eclipse Marketplace and search for Xt
  
 Tdl.xtext contains the grammar for the task definition language written in Xtext.
 
-TdlGenerator.xtend contains the generator which is used to take intormation from the robot and task files to create the index file and the task allocation module, launch file, startup file, and additional ROS files for each robot.
+TdlGenerator.xtend contains the generator which is used to take information from the robot and task files to create the index file and the task allocation module, launch file, startup file, and additional ROS files for each robot.
 
 HelperMethods.java contains methods used by the generator to format generated files.
 
