@@ -9,17 +9,13 @@ Setup on simulator requires Linux with ROS installed. Setup on real robots requi
 
 ## Eclipse Setup
 
-### Clone the project:
-
 #### Clone the project:
-
-**Clone the project:**
 
 ```
 git clone https://github.com/95danlos/Task-Definition-Language.git
 ```
 
-Install Xtext and Xtend:
+#### Install Xtext and Xtend:
 
 In the Eclipse menu bar click --> help --> Eclipse Marketplace and search for Xtext and Xtend.
 
@@ -28,7 +24,7 @@ Add the Task-Definition-Language Plugin:
 In the Eclipse menu bar click --> help --> install new software --> add --> local --> select the plugin folder in the cloned project, if the plugin is not listed uncheck "Group item by category" --> install the plugin and restart Eclipse.
 
 
-Create a new project:
+#### Create a new project:
 
 In Eclipse click --> new project --> general --> project.
 
