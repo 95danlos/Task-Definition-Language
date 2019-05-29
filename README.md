@@ -55,7 +55,7 @@ Create a new ROS package called multi-robot-simulation by following the steps at
 
 Build the package by following the steps at http://wiki.ros.org/ROS/Tutorials/BuildingPackages.
 
-Copy the files from the folder called multi-robot-simulation from in the cloned project over to the new created package.
+Copy the files from the folder called multi-robot-simulation in the cloned project over to the newly created package.
 
 Make the src files executable:
 
