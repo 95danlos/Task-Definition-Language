@@ -113,15 +113,17 @@ Run the startup files on each robot, then start the server and open the index fi
 
 ## Developer Setup
 
-Import to Eclipse:
+#### Import to Eclipse:
 
 In Eclipse click --> File --> Import --> Existing Projects into Workspace --> Browse --> select the Task-Definiton-Language-Project folder.
 
-Install Xtext and Xtend:
+
+#### Install Xtext and Xtend:
 
 In the Eclipse menu bar click --> help --> Eclipse Marketplace and search for Xtext and Xtend.
 
-The project org.xtext.tdl contains six files used for development found under src:
+
+#### The project org.xtext.tdl contains six files used for development found under src:
  
 Tdl.xtext contains the grammar for the task definition language written in Xtext.
 
