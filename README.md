@@ -5,15 +5,14 @@ The Task Definition Language is a domain-specific language for the development o
 
 Setup on simulator requires Linux with ROS installed. Setup on real robots requires Linux with ROS installed on each robot and each robot must have a gps.
 
-<br />
-
-## Eclipse Setup
-
-#### Clone the project:
 
 ```
 git clone https://github.com/95danlos/Task-Definition-Language.git
 ```
+
+<br />
+
+## Eclipse Setup
 
 #### Install Xtext and Xtend:
 
