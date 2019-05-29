@@ -34,7 +34,7 @@ To add a new robot create a new file under src with the extension .tdl. Click ye
 
 A robot file should contain an implementation of each simple action that the robot is able to perform, and can also contain implementation of ROS nodes and parameters. See the ROS tutorials for information on how to write ROS nodes http://wiki.ros.org/ROS/Tutorials. 
 
-Create a new file and define each task that the robots should perform.
+Create a new .tdl file and define each task that the robots should perform.
 
 Example files for task definitions and simulated robots can be found under multi-robot-simulation/robots.
 
