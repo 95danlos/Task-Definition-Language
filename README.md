@@ -111,7 +111,7 @@ Run the startup files on each robot, then start the server and open the index fi
 
 <br />
 
-## Developer Setup
+## Maintainer Setup
 
 #### Import to Eclipse:
 
@@ -127,7 +127,7 @@ In the Eclipse menu bar click --> help --> Eclipse Marketplace and search for Xt
  
 Tdl.xtext contains the grammar for the task definition language written in Xtext.
 
-TdlGenerator.xtend contains the generator which is used to take information from the robot and task files to create the index file and the task allocation module, launch file, startup file, and additional ROS files for each robot.
+TdlGenerator.xtend contains the generator which is used to take information from the robot and task files to create the index file for the web interface, and the task allocation module, launch file, startup file, and ROS files for each robot.
 
 HelperMethods.java contains methods used by the generator to format generated files.
 
