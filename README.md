@@ -13,7 +13,7 @@ Setup on simulator requires Linux with ROS installed. Setup on real robots requi
 
 #### Clone the project:
 
-##### Clone the project:
+**Clone the project:**
 
 ```
 git clone https://github.com/95danlos/Task-Definition-Language.git
