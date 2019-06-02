@@ -27,11 +27,11 @@ In the Eclipse menu bar click --> help --> install new software --> add --> loca
 
 In Eclipse click --> new project --> general --> project.
 
-Create a new folder call it scr, here you can add a file for each robot and one file defining the tasks.
+Create a new folder call it src, here you can add a file for each robot and one file defining the tasks.
 
 To add a new robot create a new file under src with the extension .tdl. Click yes when asked to convert to Xtext project.
 
-A robot file should contain an implementation of each simple action that the robot is able to perform, and can also contain implementation of ROS nodes and parameters. See the ROS tutorials for information on how to write ROS nodes http://wiki.ros.org/ROS/Tutorials. 
+A robot file should contain an implementation of each simple action that the robot is able to perform, and can also contain implementations of ROS nodes and parameters. See the ROS tutorials for information on how to write ROS nodes http://wiki.ros.org/ROS/Tutorials. 
 
 Create a new .tdl file and define each task that the robots should perform.
 
